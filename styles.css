@@ -3,14 +3,16 @@ html {
     font-family:Verdana, Geneva, Tahoma, sans-serif;
 }
 
-/* TO DO: center divs*/
 main {
-    max-width: 90%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 #infoDiv {
     font-size: 13px;
-    max-width: 90%;
 }
 
 #userDiv {
@@ -53,6 +55,8 @@ main {
 }
 
 .subscribe-divs {
+    font-size: 15px;
+    max-width: 60%;
     text-align: center;
     border: 1px solid;
     padding: 5px;
