@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Personal BMR & TDEE Calculator</title>
+        <meta name="description" content="Calculate your personal Total Daily Energy Expenditure (TDEE) and sign up for periodic updates.">
+        <meta name="keywords" content="tdee, bmr, calculator, calories, fitness, weight, loss, muscle, gain, maintenance, total, daily, energy, expenditure, basal, metabolic, rate">
+        <link rel="stylesheet" href="styles.css">
+    </head>
+
+    <body>
+        <header>
+            <h1 id="header">Personal BMR & TDEE Calculator</h1>
+        </header>
+
+        <main>
+            <div id="infoDiv">
+                <p>Losing weight and gaining muscle can be difficult when you're not sure exactly how much energy your body is burning and how many calories you need to consume in order to reach your desired fitness goals.</p>
+                <p>Your <b>BMR</b> (Basal Metabolic Rate) gives you an idea of how many calories your body burns per day while at rest. There are many equations that can be used to calculate this number and while none will be 100% accurate, we use the Mifflin-St. Jeor equation which is often considered among the most accurate.</p>
+                <p>Your <b>TDEE</b> (Total Daily Energy Expenditure) is an estimate of how many calories your body burns per day on average based on your general activity level. This number can vary a little more widely due to changing day-to-day activity levels, as well as the exact multipliers used during calculations. Despite this, you can further fine-tune your TDEE with consistent weight tracking and experimentation to see what works best for your individual needs.</p>
+                <p>Eating below your TDEE puts you in a caloric deficit, which can help with weight loss, while eating above puts you in a caloric surplus, which can help with gaining mass. Meeting your TDEE, give or take a few deficits/surpluses, helps you maintain your current body weight with a few normal fluctuations.</p>
+                <p>By taking both your BMR and TDEE into consideration, you can develop a better understanding of areas you might need to adjust in order to lose, gain, or maintain your current weight.</p>
+            </div>
+           
+           <div id="userDiv">
+                <div id="userInputDiv">
+                    <p>Enter your measurements:</p>
+                    <div>
+                        <span>Sex:</span>
+                        <input type="radio" id="male" name="sex" value="male" checked>
+                        <label for="male">Male</label>
+                        <input type="radio" id="female" name="sex" value="female">
+                        <label for="female">Female</label>
+                    </div>
+
+                    <div>
+                        <span>Age:</span>
+                        <input id="age" name="age" type="number">
+                        <label for="age">y.o.</label>
+                    </div>
+                    
+                    <div id="systemDiv">
+                        <span>Preferred measurement system:</span><br>
+                        <input type="radio" id="imperial" name="measurements" value="imperial" checked>
+                        <label for="imperial">Imperial</label>
+                        <input type="radio" id="metric" name="measurements" value="metric">
+                        <label for="metric">Metric</label>
+                    </div>
+
+                    <div>
+                        <span>Height:</span>
+                        <div id="impHeightDiv" class="imperial-sys">
+                            <input id="feet" name="feet" type="number">
+                            <label for="feet">ft</label>
+
+                            <input id="inches" name="inches" type="number">
+                            <label for="inches">in</label>
+                        </div>
+
+                        <div id="metHeightDiv" class="metric-sys hidden-div">
+                            <input id="cm" name="cm" type="number">
+                            <label for="cm">cm</label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span>Weight:</span>
+                        <div id="impWeightDiv" class="imperial-sys">
+                            <input id="lbs" name="lbs" type="number">
+                            <label for="lbs">lbs</label>
+                        </div>
+    
+                        <div id="metWeightDiv" class="metric-sys hidden-div">
+                            <input id="kg" name="kg" type="number">
+                            <label for="kg">kg</label>
+                        </div>
+                    </div>
+
+                    <div id="activityDiv">
+                        <span>Your activity level:</span><br>
+                        <input type="radio" id="sedentary" name="activityLevel" value="sedentary" checked>
+                        <label for="sedentary">Sedentary (Rarely active)</label><br>
+                        <input type="radio" id="light" name="activityLevel" value="light">
+                        <label for="light">Light (Active a few times a week)</label><br>
+                        <input type="radio" id="moderate" name="activityLevel" value="moderate">
+                        <label for="moderate">Moderate (Active most days)</label><br>
+                        <input type="radio" id="heavy" name="activityLevel" value="heavy">
+                        <label for="heavy">Heavy (Active every day)</label>
+                    </div>
+
+                    <button id="calculate">Calculate</button>
+                    <button id="clear">Clear</button>
+                </div>
+
+                <div id="displayDiv">
+                    <p>Your estimated* BMR: <span class="displayValues" id="bmr"></span></p>
+                    <p>Your estimated** TDEE: <span class="displayValues" id="tdee"></span></p>
+                </div>
+
+           </div>
+
+            <div id="emailDiv" class="hidden-div subscribe-divs">
+                <p>Would you like to update your TDEE calculations right from your inbox?</p>
+                <p>By providing your email, we'll occasionally ask for an update on your weight, age and activity level and automatically send you your new calculations to help you stay on top of your fitness goals.</p>
+                <form id="emailForm">
+                    <label for="email">Email:</label>
+                    <input id="email" name="email" type="email">
+                    <span id="invalidEmail" class="hidden-div">Please enter a valid email.</span>
+                    <div>
+                        <p>How often would you like to receive updates?</p>
+                        <input type="radio" id="monthly" name="howOften" checked>
+                        <label for="monthly">Monthly</label>
+
+                        <input type="radio" id="bimonthly" name="howOften">
+                        <label for="bimonthly">Every Two Months</label>
+
+                        <input type="radio" id="quarterly" name="howOften">
+                        <label for="quarterly">Quarterly</label>
+
+                        <input type="radio" id="sixmonths" name="howOften">
+                        <label for="sixmonths">Every Six Months</label>
+
+                        <input type="radio" id="yearly" name="howOften">
+                        <label for="yearly">Yearly</label>
+                    </div><br>
+                    <input type="submit"  id="subscribe" value="Subscribe">
+                </form>
+            </div>
+
+            <div id="subscribedDiv" class="hidden-div subscribe-divs">
+                <p>We've sent a confirmation email to <span id="emailSpan"></span>.</p>
+            </div>
+
+        </main>
+
+        <footer>
+            <div id="asterisks">
+                <p>*Based on the Mifflin-St. Jeor equation.</p>
+                <p>**Using following multipliers: Sedentary = 1.2, Light = 1.4, Moderate = 1.65, Heavy = 1.9.</p>
+                <p>For the most accurate calculations, it's best to consult a professional. Consult your primary care physician before making drastic changes to your diet and workout regimen.</p>
+            </div>
+        </footer>
+        <script src="main.js" type="module"></script>
+    </body>
+</html>

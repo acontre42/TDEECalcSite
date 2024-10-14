@@ -1,0 +1,65 @@
+html {
+    background-color: #e0dcce;
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+}
+
+/* TO DO: center divs*/
+main {
+    max-width: 90%;
+}
+
+#infoDiv {
+    font-size: 13px;
+    max-width: 90%;
+}
+
+#userDiv {
+    min-width: 50%;
+    max-width: 75%;
+    border: 1px solid;
+    background-color: rgb(229, 229, 229);
+}
+
+#userDiv p {
+    text-align: center;
+}
+
+#userInputDiv {
+    border: 1px solid;
+    padding: 5px;
+    margin: 5px 5px 0px 5px;
+    background-color:gainsboro;
+}
+
+#userInputDiv p {
+    padding-bottom: 5px;
+    border-bottom: 1px solid;
+}
+
+.hidden-div {
+    display: none;
+}
+
+.displayValues {
+    background-color: white;
+    border: 1px solid;
+    margin: 10px;
+    padding: 5px;
+}
+
+#invalidEmail {
+    color: red;
+    font-size: 10px;
+}
+
+.subscribe-divs {
+    text-align: center;
+    border: 1px solid;
+    padding: 5px;
+    margin: 6px 0px;
+    background-color: rgb(229, 229, 229);
+}
+
+footer {
+    font-size: 10px;
+}
