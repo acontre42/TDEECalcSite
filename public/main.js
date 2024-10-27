@@ -58,14 +58,7 @@ function calculate() {
     }
     BMR_SPAN.innerText = bmr;
     // Calculate/display TDEE
-    let activityLvl;
-    let levels = document.querySelectorAll("input[name='activityLevel'");
-    for (let level of levels) {
-        if (level.checked == true) {
-            activityLvl = level.value;
-            break;
-        }
-    }
+    let activityLvl = getActivityLevel(); // ***
     let tdee = CalCalc.calcTDEE(bmr, activityLvl);
     TDEE_SPAN.innerText = tdee;
 
@@ -101,12 +94,14 @@ function subscribe(event) {
             return;
         }
         else {
-            hideElem(EMAIL_DIV);
-            EMAIL_SPAN.innerText = email;
-            unhideElem(SUBSCRIBED_DIV);
-            console.log("Subscribed");
+            person["email"] = email;
+            person["activityLvl"] = getActivityLevel(); // ***
+            person["howOften"] = getHowOften(); // ***
             console.log(person); // *** TO DO: DELETE
-            // ***TO DO: SUBSCRIBE
+            EMAIL_SPAN.innerText = email;
+            hideElem(EMAIL_DIV);
+            unhideElem(SUBSCRIBED_DIV);
+            postData(person); // ***
         }
     }
     else {
@@ -167,28 +162,60 @@ function clearEmailInfo() {
     EMAIL_SPAN.innerText = '';
     EMAIL_INPUT.value = '';
 }
+// Returns chosen option from set of radio buttons with a given name.
+function getRadioValue(name) {
+    let chosen;
+    let options = document.querySelectorAll(`input[name="${name}"]`);
+    for (let option of options) {
+        if (option.checked == true) {
+            chosen = option.value;
+            break;
+        }
+    }
+    return chosen;
+}
+const getActivityLevel = getRadioValue.bind(null, "activityLevel");
+const getHowOften = getRadioValue.bind(null, "howOften");
 // Returns user's entered measurements if valid. Else, return null. Should be called after ensuring all fields have been filled out with allFieldsFilledOut().
 function getMeasurements() {
-    let person = { // prefilled with minimum values
-        "sex": '',
-        "age": 1,
-        "feet": 2,
+    const minValues = {
+        "age": 12,
+        "feet": 4,
         "inches": 0,
-        "lbs": 15,
-        "cm": 60,
-        "kg": 6.8
+        "lbs": 60,
+        "cm": 122,
+        "kg": 27.3
     };
+    let person = {};
     let inputs;
     measurement_system === IMPERIAL ? inputs = [...INPUT_ID_STRINGS_IMPERIAL] : inputs = [...INPUT_ID_STRINGS_METRIC];
     for (let id of inputs) {
-        if (document.getElementById(id).value < person[id]) {
-            alert(id + " cannot be less than " + person[id]);
+        if (document.getElementById(id).value < minValues[id]) {
+            alert(id + " cannot be less than " + minValues[id]);
             return null;
         }
         else {
             person[id] = Number(document.getElementById(id).value);
         }
     }
-    document.getElementById(MALE).checked == true ? person.sex = MALE : person.sex = FEMALE;
+    person["sex"] = (document.getElementById(MALE).checked == true ? MALE : FEMALE);
+    person["system"] = measurement_system;
     return person;
+}
+// Post function
+async function postData(data) {
+    try {
+        const response = await fetch("/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        console.log(`Result: ${result.message}`);
+    }
+    catch (error) {
+        console.log(`ERROR: ${error}`);
+    }
 }
