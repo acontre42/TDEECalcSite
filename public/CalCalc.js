@@ -12,6 +12,10 @@ const ERROR = "ERROR";
 
 export default class CalCalc {
     static calcBMRMetric(age, sex, cm, kg) {
+        if (!age || !sex || !cm || !kg) {
+            console.log("ERROR: one or more arguments missing");
+            return ERROR;
+        }
         if (isNaN(age) || isNaN(cm) || isNaN(kg) || typeof(sex) !== "string") {
             console.log("ERROR: one or more arguments is of incorrect type");
             return ERROR;
@@ -27,6 +31,10 @@ export default class CalCalc {
     }
 
     static calcBMRImperial(age, sex, feet, inches, lbs) {
+        if (!age || !sex || !feet || !inches || !lbs) {
+            console.log("ERROR: one or more arguments missing");
+            return ERROR;
+        }
         if (isNaN(age) || isNaN(feet) || isNaN(inches) || isNaN(lbs) || typeof(sex) !== "string") {
             console.log("ERROR: one or more arguments is of incorrect type");
             return ERROR;
@@ -43,6 +51,11 @@ export default class CalCalc {
     }
 
     static calcTDEE(bmr, activityLvl) {
+        if (!bmr || !activityLvl) {
+            console.log("ERROR: one or more arguments missing");
+            return ERROR;
+        }
+
         if (isNaN(bmr)) {
             console.log("ERROR: bmr is NaN.")
             return ERROR;
