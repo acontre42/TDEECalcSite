@@ -95,9 +95,9 @@ function subscribe(event) {
         }
         else {
             person["email"] = email;
-            person["activityLvl"] = getActivityLevel(); // ***
-            person["howOften"] = getHowOften(); // ***
-            console.log(person); // *** TO DO: DELETE
+            person["activityLvl"] = getActivityLevel();
+            person["howOften"] = getHowOften();
+            console.log("Person: ", person);
             EMAIL_SPAN.innerText = email;
             hideElem(EMAIL_DIV);
             unhideElem(SUBSCRIBED_DIV);
@@ -106,7 +106,6 @@ function subscribe(event) {
     }
     else {
         unhideElem(INVALID_EMAIL_SPAN);
-        console.log("Invalid email format"); // *** TO DO: DELEtE
     }
 }
 
@@ -216,6 +215,6 @@ async function postData(data) {
         console.log(`Result: ${result.message}`);
     }
     catch (error) {
-        console.log(`ERROR: ${error}`);
+        console.log(error);
     }
 }
