@@ -12,7 +12,17 @@ describe('Test frequency related functions', () => {
     });
     
     test('Returns null when given invalid frequency descriptor', async () => {
-        const freq_id = await DBF.getFreqId(8);
+        let freq_id = await DBF.getFreqId(8);
+        expect(freq_id).toEqual(null);
+        freq_id = await DBF.getFreqId('');
+        expect(freq_id).toEqual(null);
+        freq_id = await DBF.getFreqId(0);
+        expect(freq_id).toEqual(null);
+        freq_id = await DBF.getFreqId({});
+        expect(freq_id).toEqual(null);
+        freq_id = await DBF.getFreqId(null);
+        expect(freq_id).toEqual(null);
+        freq_id = await DBF.getFreqId([]);
         expect(freq_id).toEqual(null);
     });
     
@@ -26,13 +36,14 @@ describe('Test frequency related functions', () => {
         expect(num_days).toEqual(365);
     });
     
-    test('Returns null when not given freqId', async () => {
-        const num_days = await DBF.getFreqNumDays();
-        expect(num_days).toEqual(null);
-    });
-    
     test('Returns null when given invalid freqId', async () => {
-        const num_days = await DBF.getFreqNumDays({});
+        let num_days = await DBF.getFreqNumDays({});
+        expect(num_days).toEqual(null);
+        num_days = await DBF.getFreqNumDays('');
+        expect(num_days).toEqual(null);
+        num_days = await DBF.getFreqNumDays(null);
+        expect(num_days).toEqual(null);
+        num_days = await DBF.getFreqNumDays([]);
         expect(num_days).toEqual(null);
     });
 
@@ -65,9 +76,17 @@ describe('Inserting subscriber', () => {
     test('Returns null after trying to insert invalid subscriber', async () => {
         let badId = await DBF.insertSubscriber({});
         expect(badId).toBeNull();
+        badId = await DBF.insertSubscriber({email: {}});
+        expect(badId).toBeNull();
+        badId = await DBF.insertSubscriber({email: 1});
+        expect(badId).toBeNull();
         badId = await DBF.insertSubscriber({howOften: 9});
         expect(badId).toBeNull();
         badId = await DBF.insertSubscriber({howOften: 'yearly'});
+        expect(badId).toBeNull();
+        badId = await DBF.insertSubscriber('');
+        expect(badId).toBeNull();
+        badId = await DBF.insertSubscriber(1);
         expect(badId).toBeNull();
     })
 });
@@ -97,9 +116,13 @@ describe('Selecting subscriber', () => {
         expect(sub).toBeNull();
         sub = await DBF.selectSubscriberById({});
         expect(sub).toBeNull();
-        sub = await DBF.selectSubscriberById('four');
+        sub = await DBF.selectSubscriberById('');
         expect(sub).toBeNull();
-        sub = await DBF.selectSubscriberById('4'); // **** test after switching to switch statement
+        sub = await DBF.selectSubscriberById('4');
+        expect(sub).toBeNull();
+        sub = await DBF.selectSubscriberById([]);
+        expect(sub).toBeNull();
+        sub = await DBF.selectSubscriberById(null);
         expect(sub).toBeNull();
     });
 
@@ -110,6 +133,8 @@ describe('Selecting subscriber', () => {
 
     test('Returns null when passing invalid email', async () => {
         let sub = await DBF.selectSubscriberByEmail('wrong@email.net');
+        expect(sub).toBeNull();
+        sub = await DBF.selectSubscriberByEmail(0);
         expect(sub).toBeNull();
     });
 
@@ -130,8 +155,9 @@ describe('Deleting subscribers', () => {
         id = await DBF.insertSubscriber(tempSub);
     });
 
-    test('Returns null when attempting to select subscriber that was deleted from database', async () => {
-        await DBF.deleteSubscriberById(id);
+    test('Successfully deletes subscriber', async () => {
+        let numDeleted = await DBF.deleteSubscriberById(id);
+        expect(numDeleted).toEqual(1);
         let sub = await DBF.selectSubscriberById(id);
         expect(sub).toBeNull();
     });

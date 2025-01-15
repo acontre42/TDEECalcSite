@@ -1,8 +1,8 @@
 "use strict";
 
-import path from 'path'; //const path = require('path');
-import dotenv from 'dotenv'; // const dotenv = require('dotenv');
-import {fileURLToPath} from 'url'; // const {fileURLToPath} = require('url');
+import path from 'path';
+import dotenv from 'dotenv';
+import {fileURLToPath} from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({
@@ -10,7 +10,7 @@ dotenv.config({
     path: path.join(__dirname, '/development.env')
 });
 
-import pg from 'pg'; //const pg = require('pg');
+import pg from 'pg';
 const pool = new pg.Pool({
     user: process.env.USER,
     host: process.env.HOST,
@@ -29,7 +29,7 @@ export function endPool() {
 // SUBSCRIBER TABLE
 // Valid sub object should have email and howOften properties. Returns either id of successfully inserted subscriber or null.
 export async function insertSubscriber(sub) {
-    if (!sub || typeof sub !== 'object' || !sub.howOften || !sub.email) {
+    if (!sub || typeof sub !== 'object' || !sub.howOften || !sub.email || typeof sub.email !== 'string') {
         //console.log("Error: can't insert subscriber as one or more arguments is missing or of invalid type");
         return ERROR;
     }
@@ -61,18 +61,16 @@ export async function insertSubscriber(sub) {
 
 async function selectSubscriber(column, value) {
     //console.log(`col: ${column}, val: ${value}`);
-
-    /*
-    // *** TO DO: use switch statement instead
-    let queryString = `SELECT * FROM subscriber`;
+    let queryString = `SELECT * FROM subscriber`; // *** By default, all are returned
     if (!column && !value) {
         queryString += ';';
     }
     else if (column && value && typeof column === 'string' && !/;/.test(column) && !/;/.test(value)) {
+        queryString += ` WHERE ${column} = `;
         switch (column) {
             case 'email':
                 if (typeof value === 'string') {
-                    // *** TO DO
+                    queryString += `'${value}';`;
                 }
                 else {
                     return NOT_FOUND;
@@ -80,7 +78,7 @@ async function selectSubscriber(column, value) {
                 break;
             case 'id':
                 if (typeof value === 'number') {
-                    // *** TO DO
+                    queryString += `${value};`;
                 }
                 else {
                     return NOT_FOUND;
@@ -93,31 +91,9 @@ async function selectSubscriber(column, value) {
     else {
         return NOT_FOUND;
     }
-    */
-
+    
     const client = await pool.connect();
-    try {
-        let queryString = `SELECT * FROM subscriber`;
-        if (column && typeof column == 'string' && !/;/.test(column) && value) {
-            queryString += ` WHERE ${column} = `;
-            if (typeof value === 'string' && !/;/.test(value)) {
-                queryString += `'${value}'`;
-            }
-            else if (typeof value === 'number') {
-                queryString += `${value}`;
-            }
-            else {
-                throw new Error(`Invalid value passed to selectSubscriber. Value: ${value}`);
-            }
-        }
-        else if (column && !value){
-            throw new Error(`Invalid value passed to selectSubscriber. Value: ${value}`);
-        }
-        else {
-            queryString += ';';
-            console.log(`query: ${queryString}`);
-        }
-        
+    try {       
         let {rows} = await client.query(queryString);
         if (!rows || !rows[0]) {
             //console.log("Not found");
@@ -151,18 +127,19 @@ export async function updateSubscriber() {
     // TO DO:
 }
 
+// Delete subscriber by id and return number of rows deleted. 
 export async function deleteSubscriberById(id){
-    if (!id || typeof id != "number") {
+    if (!id || typeof id !== "number") {
         return NOT_FOUND;
     }
-    // TO DO:
+
     const client = await pool.connect();
     try {
-        const queryString = `DELETE FROM subscriber WHERE id = ${id};`;
+        const queryString = `DELETE FROM subscriber WHERE id = ${id} RETURNING *;`;
         console.log(queryString);
-        let {rows} = client.query(queryString);
+        let {rows} = await client.query(queryString);
         console.log(rows);
-        return rows;
+        return rows.length;
     }
     catch (err) {
         console.log(err);
