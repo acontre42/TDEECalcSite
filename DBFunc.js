@@ -58,7 +58,7 @@ export async function insertSubscriber(sub) {
         client.release();
     }
 }
-
+// Select subscriber by email, id
 async function selectSubscriber(column, value) {
     //console.log(`col: ${column}, val: ${value}`);
     let queryString = `SELECT * FROM subscriber`; // *** By default, all are returned
@@ -123,7 +123,7 @@ export async function selectSubscriberById(id) {
     return res;
 }
 
-export async function updateSubscriber() {
+export async function updateSubscriber(subId, column, value) {
     // TO DO:
 }
 
@@ -136,9 +136,8 @@ export async function deleteSubscriberById(id){
     const client = await pool.connect();
     try {
         const queryString = `DELETE FROM subscriber WHERE id = ${id} RETURNING *;`;
-        console.log(queryString);
         let {rows} = await client.query(queryString);
-        console.log(rows);
+        //console.log(rows);
         return rows.length;
     }
     catch (err) {
@@ -151,14 +150,89 @@ export async function deleteSubscriberById(id){
 }
 
 // SUBSCRIBER_MEASUREMENTS TABLE
-export async function insertSubMeasurements() {
-    // TO DO:
+// Valid sub object should have sex, age, measurement_sys, weight_value, height_value, est_bmr, and est_tdee.
+export async function insertSubMeasurements(subId, sub) {
+    if (!subId || !sub || typeof subId !== 'number' || typeof sub !== 'object') {
+        return ERROR;
+    }
+    if (!sub.sex || !sub.age || !sub.measurement_sys || !sub.weight_value || !sub.height_value || !sub.est_bmr || !sub.est_tdee) {
+        return ERROR;
+    }
+    const {sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee} = sub;
+    if (/;/.test(sex) || /;/.test(age) || /;/.test(measurement_sys) || /;/.test(weight_value) || /;/.test(height_value) || /;/.test(est_bmr) || /;/.test(est_tdee)) {
+        return ERROR;
+    }
+
+    let queryString = `INSERT INTO subscriber_measurements (sub_id, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee)
+        VALUES ( ${subId}, '${sex}', ${age}, '${measurement_sys}', ${weight_value}, ${height_value}, ${est_bmr}, ${est_tdee} )
+        RETURNING *;`;
+    
+    const client = await pool.connect();
+    try {
+        let {rows} = await client.query(queryString);
+        //console.log(rows);
+        return ( rows[0] ? rows[0] : ERROR);
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
+// Select by sub_id
+async function selectSubMeasurements(column, value) {
+    //console.log(`col: ${column}, val: ${value}`);
+    let queryString = `SELECT * FROM subscriber_measurements`; // *** By default, all are returned
+    if (!column && !value) {
+        queryString += ';';
+    }
+    else if (column && value && typeof column === 'string' && !/;/.test(column) && !/;/.test(value)) {
+        queryString += ` WHERE ${column} = `;
+        switch (column) { // *** TO DO: what other columns might be needed?
+            case 'sub_id':
+                if (typeof value === 'number') {
+                    queryString += `${value};`;
+                }
+                else {
+                    return NOT_FOUND;
+                }
+                break;
+            default:
+                return NOT_FOUND;
+        }
+    }
+    else {
+        return NOT_FOUND;
+    }
+    
+    const client = await pool.connect();
+    try {       
+        let {rows} = await client.query(queryString);
+        if (!rows || !rows[0]) {
+            //console.log("Not found");
+            return NOT_FOUND;
+        }
+        else {
+            //console.log(rows[0]);
+            return rows[0];
+        }
+    }
+    catch (err) {
+        console.log(err);
+        return NOT_FOUND;
+    }
+    finally {
+        client.release();
+    }
+}
+export async function selectSubMeasurementsBySubId(id) {
+    const column = 'sub_id';
+    return selectSubMeasurements(column, id);
 }
 
-export async function selectSubMeasurements() {
-    // TO DO:
-}
-
+// PASS ONE SUB OBJECT OR DO INDIVIDUAL UPDATES FOR EACH UPDATED/CHANGED VALUE?
 export async function updateSubMeasurement() {
     // TO DO:
 }
