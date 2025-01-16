@@ -19,49 +19,37 @@ VALUES
 CREATE TABLE subscriber(
     id SERIAL PRIMARY KEY,
     email VARCHAR(200) UNIQUE NOT NULL,
+    freq_id INT REFERENCES frequency NOT NULL,
+    date_subscribed TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     confirmed BOOLEAN NOT NULL DEFAULT false,   -- false = pending subscriber
-    frequency_id INT REFERENCES frequency NOT NULL,
-    date_subscribed TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    date_confirmed TIMESTAMP
 );
 
 CREATE TYPE measurement_system_type AS ENUM ('imperial', 'metric');
-CREATE TYPE sex_type AS ENUM ('F', 'M');
+CREATE TYPE sex_type AS ENUM ('female', 'male'); -- changed from 'F'/'M' to align with js code
 
 CREATE TABLE subscriber_measurements(
-    sub_id INT PRIMARY KEY REFERENCES subscriber,
+    sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
     sex sex_type NOT NULL,
     age SMALLINT NOT NULL,
-    measurement_system measurement_system_type NOT NULL,
-    weight_value DECIMAL(3,3) NOT NULL,   -- lbs or kg determined by measurement_system_type
-    height_value DECIMAL (3,3) NOT NULL, -- inches or cm determined by measurement_system_type
-    est_tdee INT NOT NULL,  -- estimated TDEE
+    measurement_sys measurement_system_type NOT NULL,
+    weight_value DECIMAL(6,3) NOT NULL,   -- lbs or kg determined by measurement_system_type
+    height_value DECIMAL (6,3) NOT NULL, -- inches or cm determined by measurement_system_type
     est_bmr INT NOT NULL,   -- estimated BMR
+    est_tdee INT NOT NULL,  -- estimated TDEE
     date_last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-/*
--- TABLES NEEDED: 
-    confirmation code, 
-    scheduled reminders (trigger creation after updating confirmed to true in subscriber table or after updating date_last_updated in subscriber_measurements),
-    update codes (to avoid using predictable ids in links to update measurements)
-
--- Confirmation email code expires 30 days after date_sent. (Unsub/delete?)
+-- Confirmation email code expires 7 days after date_sent.
+-- NOTES:
+-- should be created after inserting subscriber, subscriber's confirmed column should be false
+-- on expiration date, delete all rows associated with subscriber id in database
+-- if subscriber clicks on confirmation link, subscriber.confirmed = true, set date_confirmed, delete row in confirmation_code, create row in scheduled_reminder
 CREATE TABLE confirmation_code(
-    sub_id INT PRIMARY KEY REFERENCES subscriber,
+    sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
     code INT UNIQUE NOT NULL,
     date_sent TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days')
+    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '7 days')
 );
 
--- once date_scheduled arrives, create update_code, send update email, update date of next reminder
-CREATE TABLE scheduled_reminder(
-    sub_id INT PRIMARY KEY REFERENCES subscriber,
-    date_scheduled TIMESTAMP NOT NULL
-);
-
-CREATE TABLE update_code(
-    sub_id INT PRIMARY KEY REFERENCES subscriber,
-    code INT UNIQUE NOT NULL,
-    date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMSTAMP
-);
-*/
+CREATE INDEX confirm_exp_index ON confirmation_code (date_expires);
