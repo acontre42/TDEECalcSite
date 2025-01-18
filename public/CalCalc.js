@@ -20,6 +20,10 @@ export default class CalCalc {
             console.log("ERROR: one or more arguments is of incorrect type");
             return ERROR;
         }
+        if (age < 0 || cm < 0 || kg < 0) {
+            console.log("ERROR: values cannot be negative");
+            return ERROR;
+        }
         if (sex !== MALE && sex !== FEMALE) {
             console.log("ERROR: sex entered must be male or female");
             return ERROR;
@@ -31,12 +35,16 @@ export default class CalCalc {
     }
 
     static calcBMRImperial(age, sex, feet, inches, lbs) {
-        if (!age || !sex || !feet || !inches || !lbs) {
+        if (!age || !sex || !feet || (!inches && inches !== 0) || !lbs) {
             console.log("ERROR: one or more arguments missing");
             return ERROR;
         }
         if (isNaN(age) || isNaN(feet) || isNaN(inches) || isNaN(lbs) || typeof(sex) !== "string") {
             console.log("ERROR: one or more arguments is of incorrect type");
+            return ERROR;
+        }
+        if (age < 0 || feet < 0 || inches < 0 || lbs < 0) {
+            console.log("ERROR: values cannot be negative");
             return ERROR;
         }
         if (sex !== MALE && sex !== FEMALE) {
