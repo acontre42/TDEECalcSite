@@ -40,8 +40,12 @@ export async function insertSubscriber(sub) {
         if (!freqId) {
             throw new Error("Invalid frequency descriptor in sub.howOften.");
         }
-        let queryString = `INSERT INTO subscriber (email, freq_id) VALUES ('${sub.email}', ${freqId}) RETURNING id;`;
-        const {rows} = await client.query(queryString);
+
+        const query = {
+            text: 'INSERT INTO subscriber (email, freq_id) VALUES ($1, $2) RETURNING id;',
+            values: [sub.email, freqId]
+        };
+        const {rows} = await client.query(query);
         //console.log(rows);
         if (rows[0]) {
             return rows[0]['id'];
@@ -61,16 +65,15 @@ export async function insertSubscriber(sub) {
 // Select subscriber by email, id
 async function selectSubscriber(column, value) {
     //console.log(`col: ${column}, val: ${value}`);
-    let queryString = `SELECT * FROM subscriber`; // *** By default, all are returned
+    let queryString;
     if (!column && !value) {
-        queryString += ';';
+        queryString = `SELECT * FROM subscriber;`; // *** By default, all are returned
     }
-    else if (column && value && typeof column === 'string' && !/;/.test(column) && !/;/.test(value)) {
-        queryString += ` WHERE ${column} = `;
+    else if (column && value && typeof column === 'string') {
         switch (column) {
             case 'email':
                 if (typeof value === 'string') {
-                    queryString += `'${value}';`;
+                    queryString = `SELECT * FROM subscriber WHERE email = $1;`;
                 }
                 else {
                     return NOT_FOUND;
@@ -78,7 +81,7 @@ async function selectSubscriber(column, value) {
                 break;
             case 'id':
                 if (typeof value === 'number') {
-                    queryString += `${value};`;
+                    queryString = `SELECT * FROM subscriber WHERE id = $1;`;
                 }
                 else {
                     return NOT_FOUND;
@@ -94,7 +97,11 @@ async function selectSubscriber(column, value) {
     
     const client = await pool.connect();
     try {       
-        let {rows} = await client.query(queryString);
+        const query = {
+            text: queryString,
+            values: [value]
+        };
+        const {rows} = await client.query(query);
         if (!rows || !rows[0]) {
             //console.log("Not found");
             return NOT_FOUND;
@@ -125,6 +132,9 @@ export async function selectSubscriberById(id) {
 
 export async function updateSubscriber(subId, column, value) {
     // TO DO:
+    if (!subId && !column && !value && typeof subId !== 'number' && typeof column !== 'string') {
+        return ERROR;
+    }
 }
 
 // Delete subscriber by id and return number of rows deleted. 
@@ -135,8 +145,11 @@ export async function deleteSubscriberById(id){
 
     const client = await pool.connect();
     try {
-        const queryString = `DELETE FROM subscriber WHERE id = ${id} RETURNING *;`;
-        let {rows} = await client.query(queryString);
+        const query = {
+            text: 'DELETE FROM subscriber WHERE id = $1 RETURNING *;',
+            values: [id]
+        };
+        const {rows} = await client.query(query);
         //console.log(rows);
         return rows.length;
     }
@@ -159,17 +172,17 @@ export async function insertSubMeasurements(subId, sub) {
         return ERROR;
     }
     const {sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee} = sub;
-    if (/;/.test(sex) || /;/.test(age) || /;/.test(measurement_sys) || /;/.test(weight_value) || /;/.test(height_value) || /;/.test(est_bmr) || /;/.test(est_tdee)) {
-        return ERROR;
-    }
 
-    let queryString = `INSERT INTO subscriber_measurements (sub_id, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee)
-        VALUES ( ${subId}, '${sex}', ${age}, '${measurement_sys}', ${weight_value}, ${height_value}, ${est_bmr}, ${est_tdee} )
-        RETURNING *;`;
+    const queryString = `INSERT INTO subscriber_measurements (sub_id, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee)
+        VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 ) RETURNING *;`;
     
     const client = await pool.connect();
     try {
-        let {rows} = await client.query(queryString);
+        const query = {
+            text: queryString,
+            values: [subId, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee]
+        };
+        const {rows} = await client.query(query);
         //console.log(rows);
         return ( rows[0] ? rows[0] : ERROR);
     }
@@ -184,16 +197,16 @@ export async function insertSubMeasurements(subId, sub) {
 // Select by sub_id
 async function selectSubMeasurements(column, value) {
     //console.log(`col: ${column}, val: ${value}`);
-    let queryString = `SELECT * FROM subscriber_measurements`; // *** By default, all are returned
+    let queryString;
+
     if (!column && !value) {
-        queryString += ';';
+        queryString = `SELECT * FROM subscriber_measurements;`; // *** By default, all are returned
     }
-    else if (column && value && typeof column === 'string' && !/;/.test(column) && !/;/.test(value)) {
-        queryString += ` WHERE ${column} = `;
+    else if (column && value && typeof column === 'string') {
         switch (column) { // *** TO DO: what other columns might be needed?
             case 'sub_id':
                 if (typeof value === 'number') {
-                    queryString += `${value};`;
+                    queryString = 'SELECT * FROM subscriber_measurements WHERE sub_id = $1;';
                 }
                 else {
                     return NOT_FOUND;
@@ -208,8 +221,12 @@ async function selectSubMeasurements(column, value) {
     }
     
     const client = await pool.connect();
-    try {       
-        let {rows} = await client.query(queryString);
+    try {    
+        const query = {
+            text: queryString,
+            values: [value]
+        };   
+        const {rows} = await client.query(query);
         if (!rows || !rows[0]) {
             //console.log("Not found");
             return NOT_FOUND;
@@ -258,8 +275,11 @@ export async function getFreqId(freq) {
     
     const client = await pool.connect();
     try {
-        let queryString = `SELECT id FROM frequency WHERE descriptor = '${freq}';`;
-        let {rows} = await client.query(queryString);
+        const query = {
+            text: 'SELECT id FROM frequency WHERE descriptor = $1;',
+            values: [freq]
+        };
+        const {rows} = await client.query(query);
         return ( !rows[0] ? NOT_FOUND : parseInt(rows[0]['id']) );
     }
     catch (err) {
@@ -279,8 +299,11 @@ export async function getFreqNumDays(freqId) {
 
     const client = await pool.connect();
     try {
-        let queryString = `SELECT num_days FROM frequency WHERE id = ${freqId}`;
-        let {rows} = await client.query(queryString);
+        const query = {
+            text: 'SELECT num_days FROM frequency WHERE id = $1;',
+            values: [freqId]
+        };
+        const {rows} = await client.query(query);
         return ( !rows[0] ? NOT_FOUND : parseInt(rows[0]['num_days']) );
     }
     catch (err) {
