@@ -14,7 +14,7 @@ import pg from 'pg';
 const pool = new pg.Pool({
     user: process.env.USER,
     host: process.env.HOST,
-    database: process.env.DATABASE,
+    database: (process.env.TESTING ? process.env.TEST_DATABASE : process.env.DATABASE), // ***
     password: process.env.PASSWORD,
     port: process.env.PORT
 });
@@ -129,11 +129,55 @@ export async function selectSubscriberById(id) {
     const res = await selectSubscriber(column, id);
     return res;
 }
-
-export async function updateSubscriber(subId, column, value) {
+// Update subscriber's email or freq_id. Returns updated row if successful or null if not.
+async function updateSubscriber(id, column, value) {
     // TO DO:
-    if (!subId && !column && !value && typeof subId !== 'number' && typeof column !== 'string') {
+    if (!id || !column || !value || typeof id !== 'number' || typeof column !== 'string') {
         return ERROR;
+    }
+
+    let queryString;
+    switch(column) {
+        case 'email':
+            queryString = 'UPDATE subscriber SET email = $1 WHERE id = $2 RETURNING *;';
+            break;
+        case 'freq_id':
+            queryString = 'UPDATE subscriber SET freq_id = $1 WHERE id = $2 RETURNING *;';
+            break;
+        default:
+            return ERROR;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: queryString,
+            values: [value, id]
+        };
+        const {rows} = await client.query(query);
+        //console.log(rows);
+        return ( rows[0] ? rows[0] : ERROR);
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
+export async function updateSubscriberEmail(id, newEmail) {
+    const column = "email";
+    return updateSubscriber(id, column, newEmail);
+}
+export async function updateSubscriberFreq(id, howOften) {
+    const freqId = await getFreqId(howOften);
+    if (!freqId) {
+        return ERROR;
+    }
+    else {
+        const column = "freq_id";
+        return updateSubscriber(id, column, freqId);
     }
 }
 
@@ -187,7 +231,7 @@ export async function insertSubMeasurements(subId, sub) {
         return ( rows[0] ? rows[0] : ERROR);
     }
     catch (err) {
-        console.log(err);
+        //console.log(err);
         return ERROR;
     }
     finally {
@@ -250,7 +294,7 @@ export async function selectSubMeasurementsBySubId(id) {
 }
 
 // PASS ONE SUB OBJECT OR DO INDIVIDUAL UPDATES FOR EACH UPDATED/CHANGED VALUE?
-export async function updateSubMeasurement() {
+export async function updateSubMeasurements(subId, column, value) {
     // TO DO:
 }
 
@@ -267,6 +311,7 @@ export async function updateSchedReminder() {
     // TO DO:
 }
 
+// FREQUENCY TABLE
 // Return id that matches frequency descriptor. (Ex: 'monthly' -> 1, 'yearly' -> 5, etc.)
 export async function getFreqId(freq) {
     if (!freq || typeof freq !== 'string') {
@@ -290,7 +335,6 @@ export async function getFreqId(freq) {
         client.release();
     }
 }
-
 // Return num_days that matches frequency id. (Ex: 1 -> 30 days)
 export async function getFreqNumDays(freqId) {
     if (!freqId || typeof freqId !== 'number') {

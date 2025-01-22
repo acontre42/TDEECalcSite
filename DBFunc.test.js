@@ -1,6 +1,10 @@
 "use strict";
 import * as DBF from './DBFunc.js';
 
+beforeAll(() => {
+    console.log("TESTING ENVIRONMENT? " + process.env.TESTING); // *** TESTING=true npm test, TESTING=true npm test -- dbfunc.test.js
+});
+
 afterAll(() => {
     DBF.endPool();
 });
@@ -144,6 +148,64 @@ describe('Selecting subscriber', () => {
     });
 });
 
+describe('Updating subscriber', () => {
+    let tempSub = {
+        email: 'updateme@email.com',
+        howOften: 'bimonthly',
+    };
+    let id;
+
+    beforeAll(async () => {
+        id = await DBF.insertSubscriber(tempSub);
+    });
+
+    afterAll(async () => {
+        await DBF.deleteSubscriberById(id);
+    });
+
+    test('Returns updated row when updating subscriber email', async () => {
+        let newEmail = 'updated@email.com';
+        let res = await DBF.updateSubscriberEmail(id, newEmail);
+        expect(res.email).toEqual(newEmail);
+    });
+
+    test('Returns correct value when attempting to update subscriber freq_id', async () => {
+        let res = await DBF.updateSubscriberFreq(id, 'oops');
+        expect(res).toBeNull();
+        res = await DBF.updateSubscriberFreq(id, 'yearly');
+        expect(res.freq_id).toEqual(5);
+    });
+});
+
+describe('Deleting subscribers', () => {
+    let tempSub = {
+        email: 'deleteme@email.com',
+        howOften: 'bimonthly',
+        sex: 'male',
+        age: 30,
+        measurement_sys: 'imperial',
+        weight_value: 180,
+        height_value: 70,
+        est_bmr: 1800,
+        est_tdee: 2400
+    };
+    let id;
+
+    beforeAll(async () => {
+        id = await DBF.insertSubscriber(tempSub);
+        await DBF.insertSubMeasurements(id, tempSub);
+    });
+
+    test('Successfully deletes subscriber', async () => {
+        let numDeleted = await DBF.deleteSubscriberById(id);
+        expect(numDeleted).toEqual(1);
+        let sub = await DBF.selectSubscriberById(id);
+        expect(sub).toBeNull();
+        let measurements = await DBF.selectSubMeasurementsBySubId(id);
+        expect(measurements).toBeNull();
+    });
+});
+
 describe('Inserting subscriber_measurements', () => {
     let sub = {
         email: 'e@mail.org',
@@ -198,34 +260,5 @@ describe('Inserting subscriber_measurements', () => {
         badRes = await DBF.insertSubMeasurements();
         expect(badRes).toBeNull();
         await DBF.deleteSubscriberById(id2);
-    });
-});
-
-describe('Deleting subscribers', () => {
-    let tempSub = {
-        email: 'deleteme@email.com',
-        howOften: 'bimonthly',
-        sex: 'male',
-        age: 30,
-        measurement_sys: 'imperial',
-        weight_value: 180,
-        height_value: 70,
-        est_bmr: 1800,
-        est_tdee: 2400
-    };
-    let id;
-
-    beforeAll(async () => {
-        id = await DBF.insertSubscriber(tempSub);
-        await DBF.insertSubMeasurements(id, tempSub);
-    });
-
-    test('Successfully deletes subscriber', async () => {
-        let numDeleted = await DBF.deleteSubscriberById(id);
-        expect(numDeleted).toEqual(1);
-        let sub = await DBF.selectSubscriberById(id);
-        expect(sub).toBeNull();
-        let measurements = await DBF.selectSubMeasurementsBySubId(id);
-        expect(measurements).toBeNull();
     });
 });
