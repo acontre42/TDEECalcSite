@@ -14,7 +14,7 @@ import pg from 'pg';
 const pool = new pg.Pool({
     user: process.env.USER,
     host: process.env.HOST,
-    database: (process.env.TESTING ? process.env.TEST_DATABASE : process.env.DATABASE), // ***
+    database: (process.env.TESTING ? process.env.TEST_DATABASE : process.env.DATABASE),
     password: process.env.PASSWORD,
     port: process.env.PORT
 });
@@ -27,18 +27,18 @@ export function endPool() {
 }
 
 // SUBSCRIBER TABLE
-// Valid sub object should have email and howOften properties. Returns either id of successfully inserted subscriber or null.
+// Valid sub object should have email and freq properties. Returns either id of successfully inserted subscriber or null.
 export async function insertSubscriber(sub) {
-    if (!sub || typeof sub !== 'object' || !sub.howOften || !sub.email || typeof sub.email !== 'string') {
+    if (!sub || typeof sub !== 'object' || !sub.freq || !sub.email || typeof sub.email !== 'string') {
         //console.log("Error: can't insert subscriber as one or more arguments is missing or of invalid type");
         return ERROR;
     }
 
     const client = await pool.connect();
     try {
-        let freqId = await getFreqId(sub.howOften);
+        let freqId = await getFreqId(sub.freq);
         if (!freqId) {
-            throw new Error("Invalid frequency descriptor in sub.howOften.");
+            throw new Error("Invalid frequency descriptor in sub.freq.");
         }
 
         const query = {
@@ -170,8 +170,8 @@ export async function updateSubscriberEmail(id, newEmail) {
     const column = "email";
     return updateSubscriber(id, column, newEmail);
 }
-export async function updateSubscriberFreq(id, howOften) {
-    const freqId = await getFreqId(howOften);
+export async function updateSubscriberFreq(id, freq) {
+    const freqId = await getFreqId(freq);
     if (!freqId) {
         return ERROR;
     }

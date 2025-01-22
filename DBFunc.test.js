@@ -61,7 +61,7 @@ describe('Test frequency related functions', () => {
 describe('Inserting subscriber', () => {
     const validSub = {
         email: 'test@email.net',
-        howOften: 'monthly'
+        freq: 'monthly'
     };
 
     test('Returns valid id after inserting valid subscriber', async () => {
@@ -84,9 +84,9 @@ describe('Inserting subscriber', () => {
         expect(badId).toBeNull();
         badId = await DBF.insertSubscriber({email: 1});
         expect(badId).toBeNull();
-        badId = await DBF.insertSubscriber({howOften: 9});
+        badId = await DBF.insertSubscriber({freq: 9});
         expect(badId).toBeNull();
-        badId = await DBF.insertSubscriber({howOften: 'yearly'});
+        badId = await DBF.insertSubscriber({freq: 'yearly'});
         expect(badId).toBeNull();
         badId = await DBF.insertSubscriber('');
         expect(badId).toBeNull();
@@ -98,7 +98,7 @@ describe('Inserting subscriber', () => {
 describe('Selecting subscriber', () => {
     let testSub = {
         email: 'test2@email.net',
-        howOften: 'yearly'
+        freq: 'yearly'
     };
     let testId;
 
@@ -151,7 +151,7 @@ describe('Selecting subscriber', () => {
 describe('Updating subscriber', () => {
     let tempSub = {
         email: 'updateme@email.com',
-        howOften: 'bimonthly',
+        freq: 'bimonthly',
     };
     let id;
 
@@ -180,7 +180,7 @@ describe('Updating subscriber', () => {
 describe('Deleting subscribers', () => {
     let tempSub = {
         email: 'deleteme@email.com',
-        howOften: 'bimonthly',
+        freq: 'bimonthly',
         sex: 'male',
         age: 30,
         measurement_sys: 'imperial',
@@ -209,7 +209,7 @@ describe('Deleting subscribers', () => {
 describe('Inserting subscriber_measurements', () => {
     let sub = {
         email: 'e@mail.org',
-        howOften: 'bimonthly',
+        freq: 'bimonthly',
         sex: 'male',
         age: 30,
         measurement_sys: 'imperial',
