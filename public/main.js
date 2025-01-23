@@ -95,8 +95,9 @@ function subscribe(event) {
         }
         else {
             person["email"] = email;
-            person["activityLvl"] = getActivityLevel();
             person["howOften"] = getHowOften();
+            person["est_bmr"] = Number(BMR_SPAN.innerText);
+            person["est_tdee"] = Number(TDEE_SPAN.innerText);
             console.log("Person: ", person);
             EMAIL_SPAN.innerText = email;
             hideElem(EMAIL_DIV);
