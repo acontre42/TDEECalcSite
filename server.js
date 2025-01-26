@@ -1,71 +1,41 @@
 "use strict";
-const express = require("express");
+import express from 'express';
 const app = express();
 const port = 3000;
 
-const nodemailer = require("nodemailer"); // ***
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.TEST_USER,
-        pass: process.env.TEST_PASS
-    }
-});
+import {fileURLToPath} from 'url'; 
+import path from 'path'; 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+//console.log(__dirname, __filename);
 
-const VERIFIED_SUBS = new Map();
-const PENDING = new Map();
-let idCount = 0;
+import * as Subscription from './SubscriptionAPI.js';
 
-let pendingEmails = []; // Aray with string of email addresses that need verification emails
-let sendIntervalId = setInterval(sendVerificationEmails, 60000);
+let pendingSubs = []; // *** DELETE WHEN DONE TESTING
 
 app.use(express.static(__dirname + "/public"));
 app.use(express.json()); // Middleware to parse req.body
 
 app.post("/", (req, res) => {
-    console.log(req.body);
+    console.log("Received in /: ", req.body);
     if (isValidRequest(req.body)) {
         let subscriber = req.body;
-        subscriber["id"] = ++idCount;
-        if (VERIFIED_SUBS.has(subscriber.email)) {
-            PENDING.set(subscriber.email, subscriber);
-            res.status(202).send({message: "Update request received."});
-        }
-        else if (PENDING.has(subscriber.email)) {
-            PENDING.set(subscriber.email, subscriber);
-            res.status(200).send({message: "New confirmation email will be sent."})
-        }
-        else {
-            PENDING.set(subscriber.email, subscriber);
-            res.status(201).send({message: "Subscribed"});
-        }
+        pendingSubs.push(subscriber);
+        displayPending(); // *** DELETE WHEN DONE TESTING
 
-        pendingEmails.push(subscriber.email);
-        console.log(`Pending emails: ${pendingEmails}`);
-        //console.log("Verified: \n", VERIFIED_SUBS);
-        //console.log("Pending: \n", PENDING);
+        res.status(200).send({message: `Added ${subscriber.email} to pending subscribers.`});
     }
     else {
-        res.sendStatus(400);
+        res.status(400).send({message: 'Invalid request.'});
     }
 });
 
-app.delete("/unsubscribe/:id", (req, res) => { // ***
+app.delete("/unsubscribe/:id/:code", (req, res) => { // ***
     let id = parseInt(req.params.id);
-    let email;
-    for (let key of VERIFIED_SUBS.keys()) {
-        let sub = VERIFIED_SUBS.get(key);
-        console.log(sub);
-        if (sub.id == id) {
-            console.log(`Found id ${sub.id} with email ${sub.email}`);
-            email = sub.email;
-            break;
-        }
-    }
-
-    if (VERIFIED_SUBS.has(email)) {
-        VERIFIED_SUBS.delete(email);
-        console.log("Verified: \n", VERIFIED_SUBS);
+    let code = parseInt(req.params.code);
+    // *** TO DO:
+    let valid;
+    if (valid) {
         res.status(200).send({message: `Unsubscribed id ${id}`});
     }
     else {
@@ -73,14 +43,32 @@ app.delete("/unsubscribe/:id", (req, res) => { // ***
     }
 });
 
+app.get('/update/:id/:code', function (req, res) {
+    let id = parseInt(req.params.id);
+    let code = parseInt(req.params.id);
+    // TO DO: display calculator form with last saved values
+});
+
+app.put('/update/:id/:code', function (req, res) {
+    let id = parseInt(req.params.id);
+    let code = parseInt(req.params.id);
+    // TO DO: update subscriber_measurements
+});
+
+app.put('confirm/:id/:code', function(req, res) {
+    let id = parseInt(req.params.id);
+    let code = parseInt(req.params.code);
+    // TO DO: if id and code valid, confirm user
+});
+
 app.listen(port, () => console.log(`Server is listening on port ${port}`));
 
 // FUNCTIONS
-// Valid request should have EMAIL, SYSTEM, SEX, AGE, ACTIVITY_LEVEL, HOW_OFTEN.
+// Valid request should have EMAIL, SYSTEM, SEX, AGE, HOW_OFTEN, EST_BMR, EST_TDEE. (Don't need activityLvl)
 // If system = "imperial", request should have FEET, INCHES, LBS.
 // If system = "metric", request should have CM, KG.
 function isValidRequest(body) {
-    if (!body.email || !body.system || !body.sex || !body.age || !body.activityLvl || !body.howOften) {
+    if (!body.email || !body.system || !body.sex || !body.age || !body.howOften || !body.est_bmr || !body.est_tdee) {
         return false;
     }
 
@@ -110,32 +98,9 @@ function isValidEmailFormat(emailString) {
     let regex = /^[\w!#$%&'*+-/=?^_`{|}~]{1,64}@[\w.]{1,63}\.[a-zA-Z0-9-]{1,63}$/i;
     return regex.test(emailString);
 }
-// Send verification emails in batches
-function sendVerificationEmails() {
-    console.log(`Sending verification emails at ${new Date()}`)
-    for (let address of pendingEmails) {
-        if (!VERIFIED_SUBS.has(address) && !PENDING.has(address)) {
-            console.log(`ERROR: ${address} not found in pending or verified. Discarding...`);
-            break;
-        }
-        else {
-            // *** TO DO: replace testing code
-            let mailOptions = {
-                from: process.env.TEST_USER,
-                to: process.env.TEST_USER,
-                subject: "Please confirm your email to receive TDEE updates.",
-                text: `Test email: ${address}`
-            };
-            transporter.sendMail(mailOptions, function(error, info) {
-                if (error) {
-                    console.log(error);
-                }
-                else {
-                    console.log(`Verification email sent to ${address}`);
-                    console.log(`Response: ${info.response}`);
-                }
-            });
-        }
-    }
-    pendingEmails = [];
+
+// TESTING FUNCTIONS
+function displayPending() {
+    console.log(`Pending subs (${new Date()}):\n`);
+    console.log(pendingSubs);
 }
