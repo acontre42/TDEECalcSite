@@ -57,40 +57,56 @@ describe('Test frequency related functions', () => {
     });
 });
 
-
-describe('Inserting subscriber', () => {
+describe('Inserting new users in database', () => {
     const validSub = {
         email: 'test@email.net',
-        freq: 'monthly'
+        freq: 'monthly',
+        age: 20,
+        sex: 'male',
+        est_tdee: 2500,
+        est_bmr: 1800,
+        measurement_sys: 'imperial',
+        height_value: 70,
+        weight_value: 200
     };
 
-    test('Returns valid id after inserting valid subscriber', async () => {
-        const id = await DBF.insertSubscriber(validSub);
-        await DBF.deleteSubscriberById(id);
+    test('Successfully inserts new user into database (subscriber, subscriber_measurements, confirmation_code)', async () => {
+        const id = await DBF.subscribe(validSub);
         expect(id).not.toBeNaN();
+        const measurements = await DBF.selectSubMeasurementsBySubId(id);
+        expect(measurements.sub_id).toEqual(id);
+        const code = await DBF.selectConfirmationCodeBySubId(id);
+        expect(code.sub_id).toEqual(id);
+        await DBF.deleteSubscriberById(id);
     });
 
     test('Returns null when trying to insert repeat subscriber', async () => {
-        const validId = await DBF.insertSubscriber(validSub);
-        const badId = await DBF.insertSubscriber(validSub);
+        const validId = await DBF.subscribe(validSub);
+        const badId = await DBF.subscribe(validSub);
         await DBF.deleteSubscriberById(validId);
         expect(badId).toBeNull();
     });
     
     test('Returns null after trying to insert invalid subscriber', async () => {
-        let badId = await DBF.insertSubscriber({});
+        let badId = await DBF.subscribe({});
         expect(badId).toBeNull();
-        badId = await DBF.insertSubscriber({email: {}});
+        badId = await DBF.subscribe({email: 'hi', freq: 'yearly'});
         expect(badId).toBeNull();
-        badId = await DBF.insertSubscriber({email: 1});
+        badId = await DBF.subscribe(`{
+            email: 'test@email.net',
+            freq: 'monthly',
+            age: 20,
+            sex: 'male',
+            est_tdee: 2500,
+            est_bmr: 1800,
+            measurement_sys: 'imperial',
+            height_value: 70,
+            weight_value: 200
+        }`);
         expect(badId).toBeNull();
-        badId = await DBF.insertSubscriber({freq: 9});
+        badId = await DBF.subscribe(1);
         expect(badId).toBeNull();
-        badId = await DBF.insertSubscriber({freq: 'yearly'});
-        expect(badId).toBeNull();
-        badId = await DBF.insertSubscriber('');
-        expect(badId).toBeNull();
-        badId = await DBF.insertSubscriber(1);
+        badId = await DBF.subscribe(null);
         expect(badId).toBeNull();
     })
 });
@@ -98,12 +114,19 @@ describe('Inserting subscriber', () => {
 describe('Selecting subscriber', () => {
     let testSub = {
         email: 'test2@email.net',
-        freq: 'yearly'
+        freq: 'yearly',
+        age: 20,
+        sex: 'male',
+        est_tdee: 2500,
+        est_bmr: 1800,
+        measurement_sys: 'imperial',
+        height_value: 70,
+        weight_value: 200
     };
     let testId;
 
     beforeAll(async () => {
-        testId = await DBF.insertSubscriber(testSub);
+        testId = await DBF.subscribe(testSub);
     });
 
     afterAll(async () => {
@@ -148,36 +171,49 @@ describe('Selecting subscriber', () => {
     });
 });
 
-describe('Updating subscriber', () => {
+describe('Updating subscriber and related tables', () => {
     let tempSub = {
         email: 'updateme@email.com',
         freq: 'bimonthly',
+        age: 20,
+        sex: 'male',
+        est_tdee: 2500,
+        est_bmr: 1800,
+        measurement_sys: 'imperial',
+        height_value: 70,
+        weight_value: 200
     };
     let id;
 
     beforeAll(async () => {
-        id = await DBF.insertSubscriber(tempSub);
+        id = await DBF.subscribe(tempSub);
     });
 
     afterAll(async () => {
         await DBF.deleteSubscriberById(id);
     });
 
-    test('Returns updated row when updating subscriber email', async () => {
+    test('Successfully updates subscriber email', async () => {
         let newEmail = 'updated@email.com';
         let res = await DBF.updateSubscriberEmail(id, newEmail);
         expect(res.email).toEqual(newEmail);
     });
 
-    test('Returns correct value when attempting to update subscriber freq_id', async () => {
+    test('Successfully updates subscriber freq_id', async () => {
         let res = await DBF.updateSubscriberFreq(id, 'oops');
         expect(res).toBeNull();
         res = await DBF.updateSubscriberFreq(id, 'yearly');
         expect(res.freq_id).toEqual(5);
     });
+
+    /*
+    test('Successfully updates values in subscriber_measurements', async () => {
+        // TO DO
+    });
+    */
 });
 
-describe('Deleting subscribers', () => {
+describe('Deleting user from database', () => {
     let tempSub = {
         email: 'deleteme@email.com',
         freq: 'bimonthly',
@@ -192,73 +228,17 @@ describe('Deleting subscribers', () => {
     let id;
 
     beforeAll(async () => {
-        id = await DBF.insertSubscriber(tempSub);
-        await DBF.insertSubMeasurements(id, tempSub);
+        id = await DBF.subscribe(tempSub);
     });
 
-    test('Successfully deletes subscriber', async () => {
+    test('Successfully deletes subscriber from all tables', async () => {
         let numDeleted = await DBF.deleteSubscriberById(id);
         expect(numDeleted).toEqual(1);
         let sub = await DBF.selectSubscriberById(id);
         expect(sub).toBeNull();
         let measurements = await DBF.selectSubMeasurementsBySubId(id);
         expect(measurements).toBeNull();
-    });
-});
-
-describe('Inserting subscriber_measurements', () => {
-    let sub = {
-        email: 'e@mail.org',
-        freq: 'bimonthly',
-        sex: 'male',
-        age: 30,
-        measurement_sys: 'imperial',
-        weight_value: 180,
-        height_value: 70,
-        est_bmr: 1800,
-        est_tdee: 2400
-    };
-    let id;
-
-    beforeAll(async () => {
-        id = await DBF.insertSubscriber(sub);
-    });
-
-    afterAll(async () => {
-        await DBF.deleteSubscriberById(id);
-    });
-
-    test('Does not return null when inserting valid subscriber_measurements', async () => {
-        let res = await DBF.insertSubMeasurements(id, sub);
-        expect(res).not.toBeNull();
-    });
-
-    test('Returns null when attempting to insert repeat sub_id', async () => {
-        let badRes = await DBF.insertSubMeasurements(id, sub);
-        expect(badRes).toBeNull();
-    });
-
-    test('Returns null when passing invalid sub_id', async () => {
-        let badRes = await DBF.insertSubMeasurements(-1, sub);
-        expect(badRes).toBeNull();
-        badRes = await DBF.insertSubMeasurements(null, sub);
-        expect(badRes).toBeNull();
-        badRes = await DBF.insertSubMeasurements({}, sub);
-        expect(badRes).toBeNull();
-        badRes = await DBF.insertSubMeasurements('1', sub);
-        expect(badRes).toBeNull();
-    });
-
-    test('Returns null when passing invalid sub measurements', async () => {
-        let sub2 = {...sub};
-        sub2.email = 'copy@email.com';
-        let id2 = await DBF.insertSubscriber(sub2);
-        let badRes = await DBF.insertSubMeasurements({});
-        expect(badRes).toBeNull();
-        badRes = await DBF.insertSubMeasurements(id2);
-        expect(badRes).toBeNull();
-        badRes = await DBF.insertSubMeasurements();
-        expect(badRes).toBeNull();
-        await DBF.deleteSubscriberById(id2);
+        let code = await DBF.selectConfirmationCodeBySubId(id);
+        expect(code).toBeNull();
     });
 });
