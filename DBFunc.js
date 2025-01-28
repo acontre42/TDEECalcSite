@@ -26,42 +26,69 @@ export function endPool() {
     pool.end();
 }
 
-// SUBSCRIBER TABLE
-// Valid sub object should have email and freq properties. Returns either id of successfully inserted subscriber or null.
-export async function insertSubscriber(sub) {
+// When subscribing a new user, insert a new row into subscriber, subscriber_measurements, and confirmation_code.
+// Valid sub object should have email and freq properties.
+// Valid sub object should also have sex, age, measurement_sys, weight_value, height_value, est_bmr, and est_tdee.
+// Returns either id of successfully inserted subscriber or null.
+export async function subscribe(sub) {
     if (!sub || typeof sub !== 'object' || !sub.freq || !sub.email || typeof sub.email !== 'string') {
-        //console.log("Error: can't insert subscriber as one or more arguments is missing or of invalid type");
         return ERROR;
     }
+    if (!sub.sex || !sub.age || !sub.measurement_sys || !sub.weight_value || !sub.height_value || !sub.est_bmr || !sub.est_tdee) {
+        return ERROR;
+    }
+    const {email, freq, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee} = sub;
 
     const client = await pool.connect();
     try {
-        let freqId = await getFreqId(sub.freq);
-        if (!freqId) {
-            throw new Error("Invalid frequency descriptor in sub.freq.");
-        }
-
-        const query = {
-            text: 'INSERT INTO subscriber (email, freq_id) VALUES ($1, $2) RETURNING id;',
-            values: [sub.email, freqId]
+        console.log('BEGINNING'); // *** DELETE
+        client.query('BEGIN'); // Start transaction block
+        // Get freq_id for subscriber
+        const freqId = await getFreqId(freq);
+        // Insert subscriber, get id
+        console.log('INSERTING SUBSCRIBER'); // *** DELETE
+        let query = {
+            text: 'INSERT INTO subscriber (email, freq_id) VALUES ($1, $2) RETURNING *;',
+            values: [email, freqId]
         };
-        const {rows} = await client.query(query);
-        //console.log(rows);
-        if (rows[0]) {
-            return rows[0]['id'];
-        }
-        else {
-            return ERROR;
-        }
+        let {rows} = await client.query(query);
+        console.log(rows[0]); // ***
+        const subId = rows[0]['id'];
+        // Insert subscriber_measurements
+        console.log('INSERTING MEASUREMENTS'); // *** DELETE
+        query = {
+            text: `INSERT INTO subscriber_measurements (sub_id, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee)
+                    VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 ) RETURNING *;`,
+            values: [subId, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee]
+        };
+        ({rows} = await client.query(query));
+        console.log(rows[0]); // ***
+        // Insert confirmation_code
+        console.log('INSERTING CODE'); // *** DELETE
+        let code = generateCode();
+        query = {
+            text: 'INSERT INTO confirmation_code (sub_id, code) VALUES ($1, $2) RETURNING *;',
+            values: [subId, code]
+        };
+        ({rows} = await client.query(query));
+        console.log(rows[0]);
+        // Commit transaction and return subscriber id
+        console.log('COMMITTING'); // *** DELETE
+        await client.query('COMMIT');
+        return subId;
     }
     catch (err) {
-        //console.log(err);
+        console.log(err);
+        console.log('ROLLING BACK');
+        await client.query('ROLLBACK'); // Rollback transaction if error
         return ERROR;
     }
     finally {
         client.release();
     }
 }
+
+// SUBSCRIBER TABLE
 // Select subscriber by email, id
 async function selectSubscriber(column, value) {
     //console.log(`col: ${column}, val: ${value}`);
@@ -180,7 +207,6 @@ export async function updateSubscriberFreq(id, freq) {
         return updateSubscriber(id, column, freqId);
     }
 }
-
 // Delete subscriber by id and return number of rows deleted. 
 export async function deleteSubscriberById(id){
     if (!id || typeof id !== "number") {
@@ -207,47 +233,16 @@ export async function deleteSubscriberById(id){
 }
 
 // SUBSCRIBER_MEASUREMENTS TABLE
-// Valid sub object should have sex, age, measurement_sys, weight_value, height_value, est_bmr, and est_tdee.
-export async function insertSubMeasurements(subId, sub) {
-    if (!subId || !sub || typeof subId !== 'number' || typeof sub !== 'object') {
-        return ERROR;
-    }
-    if (!sub.sex || !sub.age || !sub.measurement_sys || !sub.weight_value || !sub.height_value || !sub.est_bmr || !sub.est_tdee) {
-        return ERROR;
-    }
-    const {sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee} = sub;
-
-    const queryString = `INSERT INTO subscriber_measurements (sub_id, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee)
-        VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 ) RETURNING *;`;
-    
-    const client = await pool.connect();
-    try {
-        const query = {
-            text: queryString,
-            values: [subId, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee]
-        };
-        const {rows} = await client.query(query);
-        //console.log(rows);
-        return ( rows[0] ? rows[0] : ERROR);
-    }
-    catch (err) {
-        //console.log(err);
-        return ERROR;
-    }
-    finally {
-        client.release();
-    }
-}
 // Select by sub_id
 async function selectSubMeasurements(column, value) {
     //console.log(`col: ${column}, val: ${value}`);
     let queryString;
 
     if (!column && !value) {
-        queryString = `SELECT * FROM subscriber_measurements;`; // *** By default, all are returned
+        queryString = `SELECT * FROM subscriber_measurements;`; // By default, all are returned
     }
     else if (column && value && typeof column === 'string') {
-        switch (column) { // *** TO DO: what other columns might be needed?
+        switch (column) { 
             case 'sub_id':
                 if (typeof value === 'number') {
                     queryString = 'SELECT * FROM subscriber_measurements WHERE sub_id = $1;';
@@ -288,27 +283,70 @@ async function selectSubMeasurements(column, value) {
         client.release();
     }
 }
-export async function selectSubMeasurementsBySubId(id) {
+export async function selectSubMeasurementsBySubId(subId) {
     const column = 'sub_id';
-    return selectSubMeasurements(column, id);
+    return selectSubMeasurements(column, subId);
 }
-
 // PASS ONE SUB OBJECT OR DO INDIVIDUAL UPDATES FOR EACH UPDATED/CHANGED VALUE?
 export async function updateSubMeasurements(subId, column, value) {
     // TO DO:
 }
 
-// SCHEDULED_REMINDER TABLE
-export async function insertSchedReminder() {
-    // TO DO:
+// CONFIRMATION_CODE TABLE
+async function selectConfirmationCode(column, value) {
+    let queryString;
+    if (!column && !value) { // By default, return all 
+        queryString = 'SELECT * FROM confirmation_code;';
+    }
+    else if (column && value && typeof column == 'string') {
+        switch (column) {
+            case 'code':
+                queryString = 'SELECT * FROM confirmation_code WHERE code = $1;';
+                break;
+            case 'sub_id':
+                queryString = 'SELECT * FROM confirmation_code WHERE sub_id = $1;';
+                break;
+            default:
+                return NOT_FOUND;
+        }
+    }
+    else {
+        return NOT_FOUND;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: queryString,
+            values: [value]
+        };
+        const {rows} = await client.query(query);
+        console.log(rows); // ***
+        return ( rows[0] ? rows[0] : NOT_FOUND );
+    }
+    catch (err) {
+        console.log(err);
+        return NOT_FOUND;
+    }
+    finally {
+        client.release();
+    }
+}
+export async function selectConfirmationCodeBySubId(subId) {
+    const column = 'sub_id';
+    return selectConfirmationCode(column, subId);
+}
+export async function selectConfirmationCodeByCode(code) {
+    const column = 'code';
+    return selectConfirmationCode(column, code);
 }
 
-export async function selectSchedReminder() {
-    // TO DO:
+export async function updateConfirmationCode(id, code) {
+    // TO DO
 }
-
-export async function updateSchedReminder() {
-    // TO DO:
+// After confirming user, delete confirmation_code associated with their id
+export async function deleteConfirmationCode(id) {
+    // TO DO
 }
 
 // FREQUENCY TABLE
@@ -358,3 +396,31 @@ export async function getFreqNumDays(freqId) {
         client.release();
     }
 }
+
+// CODE GENERATION
+const MIN_CODE = 10000000, MAX_CODE = 99999999
+// Generates code between 10000000 and 99999999 for confirmation purposes.
+function generateCode() {
+    let code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
+    return code;
+}
+
+/* // TEST CODE
+(async () => {
+    let sub = {
+        email: 'my@email.com',
+        freq: 'yearly',
+        age: 20,
+        sex: 'male',
+        est_tdee: 2500,
+        est_bmr: 1800,
+        measurement_sys: 'imperial',
+        height_value: 70,
+        weight_value: 200
+    };
+    let id = await subscribe(sub);
+    let cc = await selectConfirmationCodeBySubId(id);
+    console.log(cc);
+    await selectConfirmationCodeByCode(cc['code']);
+})();
+*/
