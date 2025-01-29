@@ -91,7 +91,6 @@ export async function subscribe(sub) {
 // SUBSCRIBER TABLE
 // Select subscriber by email, id
 async function selectSubscriber(column, value) {
-    //console.log(`col: ${column}, val: ${value}`);
     let queryString;
     if (!column && !value) {
         queryString = `SELECT * FROM subscriber;`; // *** By default, all are returned
@@ -130,11 +129,9 @@ async function selectSubscriber(column, value) {
         };
         const {rows} = await client.query(query);
         if (!rows || !rows[0]) {
-            //console.log("Not found");
             return NOT_FOUND;
         }
         else {
-            //console.log(rows[0]);
             return rows[0];
         }
     }
@@ -148,17 +145,14 @@ async function selectSubscriber(column, value) {
 }
 export async function selectSubscriberByEmail(email) {
     const column = 'email';
-    const res = await selectSubscriber(column, email);
-    return res;
+    return selectSubscriber(column, email);
 }
 export async function selectSubscriberById(id) {
     const column = 'id';
-    const res = await selectSubscriber(column, id);
-    return res;
+    return selectSubscriber(column, id);
 }
 // Update subscriber's email or freq_id. Returns updated row if successful or null if not.
 async function updateSubscriber(id, column, value) {
-    // TO DO:
     if (!id || !column || !value || typeof id !== 'number' || typeof column !== 'string') {
         return ERROR;
     }
@@ -182,7 +176,6 @@ async function updateSubscriber(id, column, value) {
             values: [value, id]
         };
         const {rows} = await client.query(query);
-        //console.log(rows);
         return ( rows[0] ? rows[0] : ERROR);
     }
     catch (err) {
@@ -220,7 +213,6 @@ export async function deleteSubscriberById(id){
             values: [id]
         };
         const {rows} = await client.query(query);
-        //console.log(rows);
         return rows.length;
     }
     catch (err) {
@@ -235,7 +227,6 @@ export async function deleteSubscriberById(id){
 // SUBSCRIBER_MEASUREMENTS TABLE
 // Select by sub_id
 async function selectSubMeasurements(column, value) {
-    //console.log(`col: ${column}, val: ${value}`);
     let queryString;
 
     if (!column && !value) {
@@ -267,11 +258,9 @@ async function selectSubMeasurements(column, value) {
         };   
         const {rows} = await client.query(query);
         if (!rows || !rows[0]) {
-            //console.log("Not found");
             return NOT_FOUND;
         }
         else {
-            //console.log(rows[0]);
             return rows[0];
         }
     }
@@ -287,9 +276,25 @@ export async function selectSubMeasurementsBySubId(subId) {
     const column = 'sub_id';
     return selectSubMeasurements(column, subId);
 }
-// PASS ONE SUB OBJECT OR DO INDIVIDUAL UPDATES FOR EACH UPDATED/CHANGED VALUE?
-export async function updateSubMeasurements(subId, column, value) {
-    // TO DO:
+// Updates all changed values in one transaction based on properties of newValues
+// Possible keys: newSex, newAge, newSys, newWeight, newHeight, newBMR, newTDEE
+// If any value gets updated, date_last_updated gets updated as well
+export async function updateSubMeasurements(subId, newValues) {
+    if (!subId || typeof subId !== 'number' || !newValues || typeof newValues != 'object') {
+        return ERROR;
+    }
+
+    const client = await pool.connect();
+    try {
+        // TO DO
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
 }
 
 // CONFIRMATION_CODE TABLE
@@ -321,11 +326,9 @@ async function selectConfirmationCode(column, value) {
             values: [value]
         };
         const {rows} = await client.query(query);
-        console.log(rows); // ***
         return ( rows[0] ? rows[0] : NOT_FOUND );
     }
     catch (err) {
-        console.log(err);
         return NOT_FOUND;
     }
     finally {
@@ -366,7 +369,6 @@ export async function getFreqId(freq) {
         return ( !rows[0] ? NOT_FOUND : parseInt(rows[0]['id']) );
     }
     catch (err) {
-        //console.log(err);
         return NOT_FOUND;
     }
     finally {
@@ -389,7 +391,6 @@ export async function getFreqNumDays(freqId) {
         return ( !rows[0] ? NOT_FOUND : parseInt(rows[0]['num_days']) );
     }
     catch (err) {
-        //console.log(err);
         return NOT_FOUND;
     }
     finally {
@@ -404,23 +405,3 @@ function generateCode() {
     let code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
     return code;
 }
-
-/* // TEST CODE
-(async () => {
-    let sub = {
-        email: 'my@email.com',
-        freq: 'yearly',
-        age: 20,
-        sex: 'male',
-        est_tdee: 2500,
-        est_bmr: 1800,
-        measurement_sys: 'imperial',
-        height_value: 70,
-        weight_value: 200
-    };
-    let id = await subscribe(sub);
-    let cc = await selectConfirmationCodeBySubId(id);
-    console.log(cc);
-    await selectConfirmationCodeByCode(cc['code']);
-})();
-*/
