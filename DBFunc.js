@@ -41,45 +41,37 @@ export async function subscribe(sub) {
 
     const client = await pool.connect();
     try {
-        console.log('BEGINNING'); // *** DELETE
         client.query('BEGIN'); // Start transaction block
         // Get freq_id for subscriber
         const freqId = await getFreqId(freq);
         // Insert subscriber, get id
-        console.log('INSERTING SUBSCRIBER'); // *** DELETE
         let query = {
             text: 'INSERT INTO subscriber (email, freq_id) VALUES ($1, $2) RETURNING *;',
             values: [email, freqId]
         };
         let {rows} = await client.query(query);
-        console.log(rows[0]); // ***
         const subId = rows[0]['id'];
         // Insert subscriber_measurements
-        console.log('INSERTING MEASUREMENTS'); // *** DELETE
         query = {
             text: `INSERT INTO subscriber_measurements (sub_id, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee)
                     VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 ) RETURNING *;`,
             values: [subId, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee]
         };
-        ({rows} = await client.query(query));
-        console.log(rows[0]); // ***
+        await client.query(query);
         // Insert confirmation_code
-        console.log('INSERTING CODE'); // *** DELETE
         let code = generateCode();
         query = {
             text: 'INSERT INTO confirmation_code (sub_id, code) VALUES ($1, $2) RETURNING *;',
             values: [subId, code]
         };
-        ({rows} = await client.query(query));
-        console.log(rows[0]);
+        await client.query(query);
         // Commit transaction and return subscriber id
-        console.log('COMMITTING'); // *** DELETE
         await client.query('COMMIT');
         return subId;
     }
     catch (err) {
         console.log(err);
-        console.log('ROLLING BACK');
+        console.log('ROLLING BACK'); // *** DELETE
         await client.query('ROLLBACK'); // Rollback transaction if error
         return ERROR;
     }
@@ -276,20 +268,87 @@ export async function selectSubMeasurementsBySubId(subId) {
     const column = 'sub_id';
     return selectSubMeasurements(column, subId);
 }
-// Updates all changed values in one transaction based on properties of newValues
-// Possible keys: newSex, newAge, newSys, newWeight, newHeight, newBMR, newTDEE
-// If any value gets updated, date_last_updated gets updated as well
+// Updates all changed values in one transaction based on whether new values differ from currently saved values
+// date_last_updated gets updated to CURRENT_TIMESTAMP regardless of whether any other values have changed
 export async function updateSubMeasurements(subId, newValues) {
     if (!subId || typeof subId !== 'number' || !newValues || typeof newValues != 'object') {
         return ERROR;
     }
 
+    const currentValues = await selectSubMeasurementsBySubId(subId);
+    if (!currentValues) {
+        return ERROR;
+    }
+
     const client = await pool.connect();
     try {
-        // TO DO
+        console.log('BEGINNING'); // *** DELETE
+        await client.query('BEGIN');
+        // Update individual columns
+        let query;
+        if (newValues.sex && newValues.sex != currentValues.sex) {
+            query = {
+                text: 'UPDATE subscriber_measurements SET sex = $1 WHERE sub_id = $2;',
+                values: [newValues.sex, subId]
+            };
+            await client.query(query);
+        }
+        if (newValues.age && newValues.age != currentValues.age) {
+            query = {
+                text: 'UPDATE subscriber_measurements SET age = $1 WHERE sub_id = $2;',
+                values: [newValues.age, subId]
+            };
+            await client.query(query);
+        }
+        if (newValues.measurement_sys && newValues.measurement_sys != currentValues.measurement_sys) {
+            query = {
+                text: 'UPDATE subscriber_measurements SET measurement_sys = $1 WHERE sub_id = $2;',
+                values: [newValues.measurement_sys, subId]
+            };
+            await client.query(query);
+        }
+        if (newValues.weight_value && newValues.weight_value != currentValues.weight_value) {
+            query = {
+                text: 'UPDATE subscriber_measurements SET weight_value = $1 WHERE sub_id = $2;',
+                values: [newValues.weight_value, subId]
+            };
+            await client.query(query);
+        }
+        if (newValues.height_value && newValues.height_value != currentValues.height_value) {
+            query = {
+                text: 'UPDATE subscriber_measurements SET height_value = $1 WHERE sub_id = $2;',
+                values: [newValues.height_value, subId]
+            };
+            await client.query(query);
+        }
+        if (newValues.est_bmr && newValues.est_bmr != currentValues.est_bmr) {
+            query = {
+                text: 'UPDATE subscriber_measurements SET est_bmr = $1 WHERE sub_id = $2;',
+                values: [newValues.est_bmr, subId]
+            };
+            await client.query(query);
+        }
+        if (newValues.est_tdee && newValues.est_tdee != currentValues.est_tdee) {
+            query = {
+                text: 'UPDATE subscriber_measurements SET est_tdee = $1 WHERE sub_id = $2;',
+                values: [newValues.est_tdee, subId]
+            };
+            await client.query(query);
+        }
+        // Update date_last_updated
+        query = {
+            text: 'UPDATE subscriber_measurements SET date_last_updated = CURRENT_TIMESTAMP WHERE sub_id = $1;',
+            values: [subId]
+        };
+        await client.query(query)
+        console.log('COMMITTING'); // *** DELETE
+        await client.query('COMMIT');
+        return selectSubMeasurementsBySubId(subId); // Return updated row
     }
     catch (err) {
         console.log(err);
+        console.log('ROLLING BACK'); // *** DELETE
+        await client.query('ROLLBACK');
         return ERROR;
     }
     finally {
@@ -405,3 +464,32 @@ function generateCode() {
     let code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
     return code;
 }
+
+/*
+(async () => {
+    let sub = {
+        email: 'test@email.net',
+        freq: 'monthly',
+        age: 20,
+        sex: 'male',
+        est_tdee: 2300,
+        est_bmr: 1800,
+        measurement_sys: 'imperial',
+        height_value: 70,
+        weight_value: 200
+    };
+    const id = await subscribe(sub);
+    const old = await selectSubMeasurementsBySubId(id);
+    console.log('OLD: ', old);
+
+    let newValues = {
+        age: 100,
+        sex: 'female',
+        est_tdee: 500000,
+        weight_value: 500.505
+    };
+    const updated = await updateSubMeasurements(id, newValues);
+    console.log('UPDATED: ', updated);
+    await deleteSubscriberById(id);
+})();
+*/
