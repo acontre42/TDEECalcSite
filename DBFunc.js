@@ -71,7 +71,6 @@ export async function subscribe(sub) {
     }
     catch (err) {
         console.log(err);
-        console.log('ROLLING BACK'); // *** DELETE
         await client.query('ROLLBACK'); // Rollback transaction if error
         return ERROR;
     }
@@ -282,7 +281,6 @@ export async function updateSubMeasurements(subId, newValues) {
 
     const client = await pool.connect();
     try {
-        console.log('BEGINNING'); // *** DELETE
         await client.query('BEGIN');
         // Update individual columns
         let query;
@@ -340,14 +338,12 @@ export async function updateSubMeasurements(subId, newValues) {
             text: 'UPDATE subscriber_measurements SET date_last_updated = CURRENT_TIMESTAMP WHERE sub_id = $1;',
             values: [subId]
         };
-        await client.query(query)
-        console.log('COMMITTING'); // *** DELETE
+        await client.query(query);
         await client.query('COMMIT');
         return selectSubMeasurementsBySubId(subId); // Return updated row
     }
     catch (err) {
         console.log(err);
-        console.log('ROLLING BACK'); // *** DELETE
         await client.query('ROLLBACK');
         return ERROR;
     }
@@ -464,32 +460,3 @@ function generateCode() {
     let code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
     return code;
 }
-
-/*
-(async () => {
-    let sub = {
-        email: 'test@email.net',
-        freq: 'monthly',
-        age: 20,
-        sex: 'male',
-        est_tdee: 2300,
-        est_bmr: 1800,
-        measurement_sys: 'imperial',
-        height_value: 70,
-        weight_value: 200
-    };
-    const id = await subscribe(sub);
-    const old = await selectSubMeasurementsBySubId(id);
-    console.log('OLD: ', old);
-
-    let newValues = {
-        age: 100,
-        sex: 'female',
-        est_tdee: 500000,
-        weight_value: 500.505
-    };
-    const updated = await updateSubMeasurements(id, newValues);
-    console.log('UPDATED: ', updated);
-    await deleteSubscriberById(id);
-})();
-*/

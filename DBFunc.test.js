@@ -103,6 +103,17 @@ describe('Inserting new users in database', () => {
             height_value: 70,
             weight_value: 200
         }`);
+        badId = await DBF.subscribe({
+            email: 'email',
+            freq: 'monthly',
+            age: 'age',
+            sex: 'male',
+            est_tdee: 2500,
+            est_bmr: 1800,
+            measurement_sys: 'imperial',
+            height_value: 70,
+            weight_value: 200
+        });
         expect(badId).toBeNull();
         badId = await DBF.subscribe(1);
         expect(badId).toBeNull();
@@ -205,12 +216,52 @@ describe('Updating subscriber and related tables', () => {
         res = await DBF.updateSubscriberFreq(id, 'yearly');
         expect(res.freq_id).toEqual(5);
     });
-
-    /*
+    
     test('Successfully updates values in subscriber_measurements', async () => {
-        // TO DO
+        const newValues = {
+            age: 100,
+            sex: 'female',
+            est_tdee: 500000,
+            weight_value: 500.505
+        };
+        const updated = await DBF.updateSubMeasurements(id, newValues);
+
+        expect(updated.age).toEqual(newValues.age);
+        expect(updated.sex).toEqual(newValues.sex);
+        expect(updated.est_tdee).toEqual(newValues.est_tdee);
+        expect(Number(updated.weight_value)).toEqual(newValues.weight_value);
+        expect(Number(updated.height_value)).toEqual(tempSub.height_value);
+        expect(updated.est_bmr).toEqual(tempSub.est_bmr);
+        expect(updated.measurement_sys).toEqual(tempSub.measurement_sys);
+
+        const newerValues = {
+            measurement_sys: 'metric',
+            height_value: 160,
+            est_bmr: 2000
+        };
+        const updated2 = await DBF.updateSubMeasurements(id, newerValues);
+        expect(Number(updated2.height_value)).toEqual(newerValues.height_value);
+        expect(updated2.est_bmr).toEqual(newerValues.est_bmr);
+        expect(updated2.measurement_sys).toEqual(newerValues.measurement_sys);
+        expect(updated2.age).toEqual(updated.age);
+        const updatedDate = new Date(updated.date_last_updated);
+        const updatedDate2 = new Date(updated2.date_last_updated);
+        expect(updatedDate2.valueOf()).toBeGreaterThan(updatedDate.valueOf());
     });
-    */
+
+    test('Returns null and does not update subscriber_measurements when invalid value passed', async () => {
+        const currentValues = await DBF.selectSubMeasurementsBySubId(id);
+        const newValues = {
+            age: 1000,
+            est_bmr: 1000.505
+        };
+        const badUpdate = await DBF.updateSubMeasurements(id, newValues);
+        expect(badUpdate).toBeNull();
+
+        const sameValues = await DBF.selectSubMeasurementsBySubId(id);
+        expect(currentValues.age).toEqual(sameValues.age);
+    });
+    
 });
 
 describe('Deleting user from database', () => {
