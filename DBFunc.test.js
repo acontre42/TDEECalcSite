@@ -261,7 +261,45 @@ describe('Updating subscriber and related tables', () => {
         const sameValues = await DBF.selectSubMeasurementsBySubId(id);
         expect(currentValues.age).toEqual(sameValues.age);
     });
-    
+
+    test('Successfully updates confirmation_code', async () => {
+        const newCode = 55555555;
+        const updatedCode = await DBF.updateConfirmationCode(id, newCode);
+        expect(updatedCode.code).toEqual(newCode);
+
+        const date_sent = new Date(updatedCode.date_sent);
+        const date_expires = new Date(updatedCode.date_expires);
+        expect(date_expires).toEqual(new Date(date_sent.setDate(date_sent.getDate() + 7))); // ensure expires 7 days later
+    });
+});
+
+describe('Deleting confirmation_codes', () => {
+    let sub = {
+        email: 'deletecode',
+        freq: 'monthly',
+        age: 20,
+        sex: 'male',
+        est_tdee: 2500,
+        est_bmr: 1800,
+        measurement_sys: 'imperial',
+        height_value: 70,
+        weight_value: 200
+    };
+    let id;
+
+    beforeAll(async () => {
+        id = await DBF.subscribe(sub);
+    });
+
+    afterAll(async () => {
+        await DBF.deleteSubscriberById(id);
+    });
+
+    test('Successfully deletes confirmation_code', async () => {
+        await DBF.deleteConfirmationCode(id);
+        const deletedCode = await DBF.selectConfirmationCodeBySubId(id);
+        expect(deletedCode).toBeNull();
+    });
 });
 
 describe('Deleting user from database', () => {

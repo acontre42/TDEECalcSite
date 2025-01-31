@@ -398,13 +398,51 @@ export async function selectConfirmationCodeByCode(code) {
     const column = 'code';
     return selectConfirmationCode(column, code);
 }
+// Updates code, date_sent, date_expires for confirmation_code associated with a non-verified subscriber
+export async function updateConfirmationCode(subId, code) {
+    if (!subId || !code || typeof subId !== 'number' || typeof code !== 'number') {
+        return ERROR;
+    }
 
-export async function updateConfirmationCode(id, code) {
-    // TO DO
+    const client = await pool.connect();
+    try {
+        let query = {
+            text: `UPDATE confirmation_code SET code = $1, date_sent = CURRENT_TIMESTAMP, date_expires = (CURRENT_TIMESTAMP + INTERVAL '7 days') WHERE sub_id = $2 RETURNING *;`,
+            values: [code, subId]
+        };
+        const {rows} = await client.query(query);
+        return ( rows[0] ? rows[0] : ERROR );
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
 }
-// After confirming user, delete confirmation_code associated with their id
-export async function deleteConfirmationCode(id) {
-    // TO DO
+// After confirming user, delete confirmation_code associated with their id. Returns number of rows deleted
+export async function deleteConfirmationCode(subId) {
+    if (!subId || typeof subId !== 'number') {
+        return ERROR;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: 'DELETE FROM confirmation_code WHERE sub_id = $1 RETURNING *;',
+            values: [subId]
+        };
+        const {rows} = client.query(query);
+        return rows.length;
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
 }
 
 // FREQUENCY TABLE
