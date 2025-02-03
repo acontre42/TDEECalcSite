@@ -59,7 +59,10 @@ export async function subscribe(sub) {
         };
         await client.query(query);
         // Insert confirmation_code
-        let code = generateCode();
+        let code = await generateCode();
+        if (!code) {
+            throw new Error('Error generating available confirmation code.');
+        }
         query = {
             text: 'INSERT INTO confirmation_code (sub_id, code) VALUES ($1, $2) RETURNING *;',
             values: [subId, code]
@@ -492,9 +495,29 @@ export async function getFreqNumDays(freqId) {
 }
 
 // CODE GENERATION
-const MIN_CODE = 10000000, MAX_CODE = 99999999
-// Generates code between 10000000 and 99999999 for confirmation purposes.
-function generateCode() {
-    let code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
-    return code;
+const MIN_CODE = 10000000, MAX_CODE = 99999999, MAX_TRIES = 5;
+// Generates code between 10000000 and 99999999 for confirmation purposes and checks its availability in database. Returns either code or ERROR.
+async function generateCode() {
+    let code;
+    let available;
+    const client = await pool.connect();
+    try {
+        let tries = 1;
+        do {
+            code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
+            const res = await selectConfirmationCodeByCode(code);
+            available = (res ? false : true);
+            console.log(`TRY #${tries} Code: ${code} Available: ${available}`);
+            tries++;
+        } while (!available && tries <= MAX_TRIES);
+
+        return ( available ? code : ERROR );
+    }
+    catch(err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
 }
