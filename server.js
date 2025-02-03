@@ -30,7 +30,7 @@ app.post("/", (req, res) => {
     }
 });
 
-app.delete("/unsubscribe/:id/:code", (req, res) => { // ***
+app.delete("/unsubscribe/:id/:code", (req, res) => {
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.code);
     // *** TO DO:
@@ -64,11 +64,11 @@ app.put('confirm/:id/:code', function(req, res) {
 app.listen(port, () => console.log(`Server is listening on port ${port}`));
 
 // FUNCTIONS
-// Valid request should have EMAIL, SYSTEM, SEX, AGE, HOW_OFTEN, EST_BMR, EST_TDEE. (Don't need activityLvl)
+// Valid request should have EMAIL, SYSTEM, SEX, AGE, FREQ, EST_BMR, EST_TDEE.
 // If system = "imperial", request should have FEET, INCHES, LBS.
 // If system = "metric", request should have CM, KG.
 function isValidRequest(body) {
-    if (!body.email || !body.system || !body.sex || !body.age || !body.howOften || !body.est_bmr || !body.est_tdee) {
+    if (!body.email || !body.system || !body.sex || !body.age || !body.freq || !body.est_bmr || !body.est_tdee) {
         return false;
     }
 

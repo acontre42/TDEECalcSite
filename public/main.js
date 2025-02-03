@@ -58,7 +58,7 @@ function calculate() {
     }
     BMR_SPAN.innerText = bmr;
     // Calculate/display TDEE
-    let activityLvl = getActivityLevel(); // ***
+    let activityLvl = getActivityLevel();
     let tdee = CalCalc.calcTDEE(bmr, activityLvl);
     TDEE_SPAN.innerText = tdee;
 
@@ -95,14 +95,14 @@ function subscribe(event) {
         }
         else {
             person["email"] = email;
-            person["howOften"] = getHowOften();
+            person["freq"] = getFreq();
             person["est_bmr"] = Number(BMR_SPAN.innerText);
             person["est_tdee"] = Number(TDEE_SPAN.innerText);
             console.log("Person: ", person);
             EMAIL_SPAN.innerText = email;
             hideElem(EMAIL_DIV);
             unhideElem(SUBSCRIBED_DIV);
-            postData(person); // ***
+            postData(person);
         }
     }
     else {
@@ -175,7 +175,7 @@ function getRadioValue(name) {
     return chosen;
 }
 const getActivityLevel = getRadioValue.bind(null, "activityLevel");
-const getHowOften = getRadioValue.bind(null, "howOften");
+const getFreq = getRadioValue.bind(null, "freq");
 // Returns user's entered measurements if valid. Else, return null. Should be called after ensuring all fields have been filled out with allFieldsFilledOut().
 function getMeasurements() {
     const minValues = {
