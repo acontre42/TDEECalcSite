@@ -11,19 +11,15 @@ const __dirname = path.dirname(__filename);
 
 import * as Subscription from './SubscriptionAPI.js';
 
-let pendingSubs = []; // *** DELETE WHEN DONE TESTING
-
 app.use(express.static(__dirname + "/public"));
 app.use(express.json()); // Middleware to parse req.body
 
-app.post("/", (req, res) => {
-    console.log("Received in /: ", req.body);
+app.post("/", async (req, res) => {
+    console.log("Received in /: ", req.body); // *** DELETE
     if (isValidRequest(req.body)) {
-        let subscriber = req.body;
-        pendingSubs.push(subscriber);
-        displayPending(); // *** DELETE WHEN DONE TESTING
-
-        res.status(200).send({message: `Added ${subscriber.email} to pending subscribers.`});
+        const subscriber = req.body;
+        const msg = await Subscription.addUserToList(subscriber);
+        res.status(200).send({message: msg});
     }
     else {
         res.status(400).send({message: 'Invalid request.'});
@@ -46,19 +42,19 @@ app.delete("/unsubscribe/:id/:code", (req, res) => {
 app.get('/update/:id/:code', function (req, res) {
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.id);
-    // TO DO: display calculator form with last saved values
+    // *** TO DO: display calculator form with last saved values
 });
 
 app.put('/update/:id/:code', function (req, res) {
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.id);
-    // TO DO: update subscriber_measurements
+    // *** TO DO: update subscriber_measurements
 });
 
 app.put('confirm/:id/:code', function(req, res) {
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.code);
-    // TO DO: if id and code valid, confirm user
+    // *** TO DO: if id and code valid, confirm user
 });
 
 app.listen(port, () => console.log(`Server is listening on port ${port}`));
@@ -97,10 +93,4 @@ function isValidRequest(body) {
 function isValidEmailFormat(emailString) {
     let regex = /^[\w!#$%&'*+-/=?^_`{|}~]{1,64}@[\w.]{1,63}\.[a-zA-Z0-9-]{1,63}$/i;
     return regex.test(emailString);
-}
-
-// TESTING FUNCTIONS
-function displayPending() {
-    console.log(`Pending subs (${new Date()}):\n`);
-    console.log(pendingSubs);
 }
