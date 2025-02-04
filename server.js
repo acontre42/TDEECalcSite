@@ -60,11 +60,11 @@ app.put('confirm/:id/:code', function(req, res) {
 app.listen(port, () => console.log(`Server is listening on port ${port}`));
 
 // FUNCTIONS
-// Valid request should have EMAIL, SYSTEM, SEX, AGE, FREQ, EST_BMR, EST_TDEE.
-// If system = "imperial", request should have FEET, INCHES, LBS.
-// If system = "metric", request should have CM, KG.
+// Valid request should have EMAIL, MEASUREMENT_SYS, SEX, AGE, FREQ, EST_BMR, EST_TDEE.
+// If measurement_sys = "imperial", request should have FEET, INCHES, LBS.
+// If measurement_sys = "metric", request should have CM, KG.
 function isValidRequest(body) {
-    if (!body.email || !body.system || !body.sex || !body.age || !body.freq || !body.est_bmr || !body.est_tdee) {
+    if (!body.email || !body.measurement_sys || !body.sex || !body.age || !body.freq || !body.est_bmr || !body.est_tdee) {
         return false;
     }
 
@@ -72,7 +72,7 @@ function isValidRequest(body) {
         return false;
     }
 
-    switch (body.system) {
+    switch (body.measurement_sys) {
         case "imperial":
             if (!body.feet || !body.lbs || (!body.inches && body.inches != 0)) {
                 return false;
@@ -83,7 +83,7 @@ function isValidRequest(body) {
                 return false;
             }
             break;
-        default: // System other than imperial/metric
+        default: // Measurement_sys other than imperial/metric
             return false;
     }
 

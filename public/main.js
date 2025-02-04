@@ -199,7 +199,7 @@ function getMeasurements() {
         }
     }
     person["sex"] = (document.getElementById(MALE).checked == true ? MALE : FEMALE);
-    person["system"] = measurement_system;
+    person["measurement_sys"] = measurement_system;
     return person;
 }
 // Post function
