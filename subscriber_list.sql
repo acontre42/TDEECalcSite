@@ -82,11 +82,11 @@ CREATE TABLE pending_update(
 );
 
 
-CREATE TYPE email_category_type AS ENUM ('confirmation', 'reminder', 'update', 'unsubscribe');
+CREATE TYPE email_category_type AS ENUM ('email confirmation', 'reminder', 'update confirmation', 'unsubscribe');
 -- Any time an email is sent, it should be recorded in email_sent table.
 CREATE TABLE email_sent(
     id SERIAL PRIMARY KEY,
-    date_sent TIMESTAMP NOT NULL,
+    date_sent TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     category email_category_type NOT NULL,
     recipient VARCHAR(200) NOT NULL,
     subject TEXT NOT NULL,

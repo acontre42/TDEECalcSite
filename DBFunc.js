@@ -87,7 +87,7 @@ export async function subscribe(sub) {
 async function selectSubscriber(column, value) {
     let queryString;
     if (!column && !value) {
-        queryString = `SELECT * FROM subscriber;`; // *** By default, all are returned
+        queryString = `SELECT * FROM subscriber;`; // By default, all are returned
     }
     else if (column && value && typeof column === 'string') {
         switch (column) {
@@ -496,7 +496,9 @@ export async function getFreqNumDays(freqId) {
 
 // CODE GENERATION
 const MIN_CODE = 10000000, MAX_CODE = 99999999, MAX_TRIES = 5;
-// Generates code between 10000000 and 99999999 for confirmation purposes and checks its availability in database. Returns either code or ERROR.
+// Generates code between 10000000 and 99999999 for confirmation purposes and checks its availability in database. 
+// Returns either code or null.
+// *** TO DO: add type argument to determine which code table to check
 async function generateCode() {
     let code;
     let available;
@@ -507,7 +509,7 @@ async function generateCode() {
             code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
             const res = await selectConfirmationCodeByCode(code);
             available = (res ? false : true);
-            console.log(`TRY #${tries} Code: ${code} Available: ${available}`);
+            console.log(`TRY #${tries} Code: ${code} Available: ${available}`); // *** DELETE
             tries++;
         } while (!available && tries <= MAX_TRIES);
 

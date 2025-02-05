@@ -17,8 +17,8 @@ app.use(express.json()); // Middleware to parse req.body
 app.post("/", async (req, res) => {
     console.log("Received in /: ", req.body); // *** DELETE
     if (isValidRequest(req.body)) {
-        const subscriber = req.body;
-        const msg = await Subscription.addUserToList(subscriber);
+        const user = req.body;
+        const msg = await Subscription.addUser(user);
         res.status(200).send({message: msg});
     }
     else {
@@ -51,7 +51,7 @@ app.put('/update/:id/:code', function (req, res) {
     // *** TO DO: update subscriber_measurements
 });
 
-app.put('confirm/:id/:code', function(req, res) {
+app.put('confirm/user/:id/:code', function(req, res) {
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.code);
     // *** TO DO: if id and code valid, confirm user
