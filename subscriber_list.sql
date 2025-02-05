@@ -25,8 +25,9 @@ CREATE TABLE subscriber(
     date_confirmed TIMESTAMP
 );
 
+
 CREATE TYPE measurement_system_type AS ENUM ('imperial', 'metric');
-CREATE TYPE sex_type AS ENUM ('female', 'male'); -- changed from 'F'/'M' to align with js code
+CREATE TYPE sex_type AS ENUM ('female', 'male');
 
 CREATE TABLE subscriber_measurements(
     sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
@@ -40,10 +41,10 @@ CREATE TABLE subscriber_measurements(
     date_last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+
 -- Confirmation email code expires 7 days after date_sent.
 -- NOTES:
--- should be created after inserting subscriber, subscriber's confirmed column should be false
--- on expiration date, delete all rows associated with subscriber id in database
+-- on expiration date, delete all records associated with subscriber id in database
 -- if subscriber clicks on confirmation link, subscriber.confirmed = true, set date_confirmed, delete row in confirmation_code, create row in scheduled_reminder
 CREATE TABLE confirmation_code(
     sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
@@ -53,3 +54,41 @@ CREATE TABLE confirmation_code(
 );
 
 CREATE INDEX confirm_exp_index ON confirmation_code (date_expires);
+
+
+-- Unsubscribe code expires 24 hours after date_created.
+CREATE TABLE unsubscribe_code(
+    sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
+    code INT UNIQUE NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours')
+);
+
+
+-- If user is already subscribed/confirmed and tries to subscribe again, send update confirmation email to confirm update to subscriber_measurements.
+-- Pending update expires 24 hours after date_created.
+CREATE TABLE pending_update(
+    sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
+    code INT UNIQUE NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours'),
+    sex sex_type NOT NULL,
+    age SMALLINT NOT NULL,
+    measurement_sys measurement_system_type NOT NULL,
+    weight_value DECIMAL(6,3) NOT NULL,
+    height_value DECIMAL (6,3) NOT NULL,
+    est_bmr INT NOT NULL,
+    est_tdee INT NOT NULL
+);
+
+
+CREATE TYPE email_category_type AS ENUM ('confirmation', 'reminder', 'update', 'unsubscribe');
+-- Any time an email is sent, it should be recorded in email_sent table.
+CREATE TABLE email_sent(
+    id SERIAL PRIMARY KEY,
+    date_sent TIMESTAMP NOT NULL,
+    category email_category_type NOT NULL,
+    recipient VARCHAR(200) NOT NULL,
+    subject TEXT NOT NULL,
+    contents TEXT NOT NULL
+);
