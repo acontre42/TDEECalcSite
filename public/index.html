@@ -109,23 +109,32 @@
                     <span id="invalidEmail" class="hidden-div">Please enter a valid email.</span>
                     <div>
                         <p>How often would you like to receive updates?</p>
-                        <input type="radio" id="monthly" name="freq" value="monthly" checked>
-                        <label for="monthly">Monthly</label>
-
-                        <input type="radio" id="bimonthly" name="freq" value="bimonthly">
-                        <label for="bimonthly">Every Two Months</label>
-
-                        <input type="radio" id="quarterly" name="freq" value="quarterly">
-                        <label for="quarterly">Quarterly</label>
-
-                        <input type="radio" id="biannually" name="freq" value="biannually">
-                        <label for="biannually">Every Six Months</label>
-
-                        <input type="radio" id="yearly" name="freq" value="yearly">
-                        <label for="yearly">Yearly</label>
-                    </div><br>
+                        <ul>
+                            <li>
+                                <input type="radio" id="monthly" name="freq" value="monthly" checked>
+                                <label for="monthly">Monthly</label>
+                            </li>
+                            <li>
+                                <input type="radio" id="bimonthly" name="freq" value="bimonthly">
+                                <label for="bimonthly">Every Two Months</label>
+                            </li>
+                            <li>
+                                <input type="radio" id="quarterly" name="freq" value="quarterly">
+                                <label for="quarterly">Quarterly</label>
+                            </li>
+                            <li>
+                                <input type="radio" id="biannually" name="freq" value="biannually">
+                                <label for="biannually">Every Six Months</label>
+                            </li>
+                            <li>
+                                <input type="radio" id="yearly" name="freq" value="yearly">
+                                <label for="yearly">Yearly</label>
+                            </li>
+                        </ul>   
+                    </div>
                     <input type="submit"  id="subscribe" value="Subscribe">
                 </form>
+                <p><small>If you are already subscribed, we'll send you an email to confirm your new measurements.</small></p>
             </div>
 
             <div id="subscribedDiv" class="hidden-div subscribe-divs">
