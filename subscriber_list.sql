@@ -66,12 +66,12 @@ CREATE TABLE unsubscribe_code(
 
 
 -- If user is already subscribed/confirmed and tries to subscribe again, send update confirmation email to confirm update to subscriber_measurements.
--- Pending update expires 24 hours after date_created.
+-- Pending update expires 30 minutes after date_created.
 CREATE TABLE pending_update(
     sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
     code INT UNIQUE NOT NULL,
     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours'),
+    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 minutes'),
     sex sex_type NOT NULL,
     age SMALLINT NOT NULL,
     measurement_sys measurement_system_type NOT NULL,
