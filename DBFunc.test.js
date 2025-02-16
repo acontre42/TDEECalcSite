@@ -1,5 +1,5 @@
 "use strict";
-import * as DBF from './DBFunc.js';
+import * as DBF from './SubscriptionService/DBFunc.js';
 
 beforeAll(() => {
     console.log("TESTING ENVIRONMENT? " + process.env.TESTING); // *** TESTING=true npm test, TESTING=true npm test -- dbfunc.test.js
