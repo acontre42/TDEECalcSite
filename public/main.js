@@ -7,7 +7,7 @@ const INPUT_ID_STRINGS = ["age", "feet", "inches", "cm", "lbs", "kg"];
 const INPUT_ID_STRINGS_IMPERIAL = ["age", "feet", "inches", "lbs"];
 const INPUT_ID_STRINGS_METRIC = ["age", "cm", "kg"];
 const EMAIL_DIV = document.getElementById("emailDiv"), SUBSCRIBED_DIV = document.getElementById("subscribedDiv");
-const EMAIL_SPAN = document.getElementById("emailSpan"), INVALID_EMAIL_SPAN = document.getElementById("invalidEmail");
+const INVALID_EMAIL_SPAN = document.getElementById("invalidEmail");
 const BMR_SPAN = document.getElementById("bmr"), TDEE_SPAN = document.getElementById("tdee");
 const EMAIL_INPUT = document.getElementById("email");
 
@@ -36,7 +36,7 @@ function useMetric() {
 }
 // Check input, calculate/display BMR & TDEE, hide/display subscription-related elements.
 function calculate() {
-    clearEmailInfo();
+    EMAIL_INPUT.value = '';
 
     if (!allFieldsFilledOut()) {
         return;
@@ -73,7 +73,7 @@ function clear() {
     INPUT_ID_STRINGS.forEach((id) => document.getElementById(id).value = '');
     BMR_SPAN.innerText = '';
     TDEE_SPAN.innerText = '';
-    clearEmailInfo();
+    EMAIL_INPUT.value = '';
     hideElem(EMAIL_DIV);
     hideElem(SUBSCRIBED_DIV);
     document.getElementById("age").focus();
@@ -99,7 +99,6 @@ function subscribe(event) {
             person["est_bmr"] = Number(BMR_SPAN.innerText);
             person["est_tdee"] = Number(TDEE_SPAN.innerText);
             console.log("Person: ", person);
-            EMAIL_SPAN.innerText = email;
             hideElem(EMAIL_DIV);
             unhideElem(SUBSCRIBED_DIV);
             postData(person);
@@ -157,11 +156,6 @@ function hideElem(elem) {
 function unhideElem(elem) {
     elem.classList.remove(HIDDEN_DIV_CLASS);
 }
-
-function clearEmailInfo() {
-    EMAIL_SPAN.innerText = '';
-    EMAIL_INPUT.value = '';
-}
 // Returns chosen option from set of radio buttons with a given name.
 function getRadioValue(name) {
     let chosen;
@@ -214,6 +208,7 @@ async function postData(data) {
         });
         const result = await response.json();
         console.log(`Result: ${result.message}`);
+        document.getElementById('subscribeMsg').innerText = result.message; // ***
     }
     catch (error) {
         console.log(error);
