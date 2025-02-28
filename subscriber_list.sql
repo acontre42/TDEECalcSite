@@ -56,12 +56,20 @@ CREATE TABLE confirmation_code(
 CREATE INDEX confirm_exp_index ON confirmation_code (date_expires);
 
 
--- Unsubscribe code expires 24 hours after date_created.
+-- Unsubscribe code expires 30 mins after date_created.
 CREATE TABLE unsubscribe_code(
     sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
     code INT UNIQUE NOT NULL,
     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours')
+    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 minutes')
+);
+
+-- Update code expires 7 days after date_created.
+CREATE TABLE update_code(
+    sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
+    code INT UNIQUE NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_expires TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '7 days')
 );
 
 
@@ -79,6 +87,13 @@ CREATE TABLE pending_update(
     height_value DECIMAL (6,3) NOT NULL,
     est_bmr INT NOT NULL,
     est_tdee INT NOT NULL
+);
+
+-- Reminders should be scheduled when a user: confirms email, updates measurements, reminder email sent
+-- once date_scheduled arrives, create update_code, send update email, update date of next reminder
+CREATE TABLE scheduled_reminder(
+    sub_id INT PRIMARY KEY REFERENCES subscriber ON DELETE CASCADE,
+    date_scheduled TIMESTAMP NOT NULL
 );
 
 
