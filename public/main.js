@@ -10,6 +10,7 @@ const EMAIL_DIV = document.getElementById("emailDiv"), SUBSCRIBED_DIV = document
 const INVALID_EMAIL_SPAN = document.getElementById("invalidEmail");
 const BMR_SPAN = document.getElementById("bmr"), TDEE_SPAN = document.getElementById("tdee");
 const EMAIL_INPUT = document.getElementById("email");
+const DISPLAY_SUMMARY = document.getElementById("displaySummary");
 
 let measurement_system = IMPERIAL;
 
@@ -46,6 +47,7 @@ function calculate() {
     if (person == null) {
         return;
     }
+    DISPLAY_SUMMARY.innerText = createSummary(person); // Display person's summary above estimates
     // Calculate/display BMR
     let bmr;
     if (measurement_system == IMPERIAL) {
@@ -74,6 +76,7 @@ function clear() {
     BMR_SPAN.innerText = '';
     TDEE_SPAN.innerText = '';
     EMAIL_INPUT.value = '';
+    DISPLAY_SUMMARY.innerText = '';
     hideElem(EMAIL_DIV);
     hideElem(SUBSCRIBED_DIV);
     document.getElementById("age").focus();
@@ -196,6 +199,28 @@ function getMeasurements() {
     person["measurement_sys"] = measurement_system;
     return person;
 }
+// Create a summary string of user's entered measurements to display above estimated BMR/TDEE
+function createSummary(person) {
+    let summary = `You are a(n) ${person.age} year old ${person.sex} standing `;
+
+    if (person.measurement_sys == IMPERIAL) {
+        summary += `${person.feet}' ${person.inches}" `;
+    }
+    else {
+        summary += `${person.cm} cm `;
+    }
+    
+    summary += `tall and weighing in at `;
+
+    if (person.measurement_sys == IMPERIAL) {
+        summary += ` ${person.lbs} lbs.`;
+    }
+    else {
+        summary += ` ${person.kg} kg.`;
+    }
+
+    return summary;
+}
 // Post function
 async function postData(data) {
     try {
@@ -208,7 +233,7 @@ async function postData(data) {
         });
         const result = await response.json();
         console.log(`Result: ${result.message}`);
-        document.getElementById('subscribeMsg').innerText = result.message; // ***
+        document.getElementById('subscribeMsg').innerText = result.message;
     }
     catch (error) {
         console.log(error);
