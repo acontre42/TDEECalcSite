@@ -9,10 +9,12 @@ afterAll(() => {
     DBF.endPool();
 });
 
-describe('Test frequency related functions', () => {
+describe('TEST FREQUENCY RELATED FUNCTIONS', () => {
     test('Returns correct freq_id for valid frequency descriptor', async () => {
-        const freq_id = await DBF.getFreqId('biannually');
+        let freq_id = await DBF.getFreqId('biannually');
         expect(freq_id).toEqual(4);
+        freq_id = await DBF.getFreqId('monthly');
+        expect(freq_id).toEqual(1);
     });
     
     test('Returns null when given invalid frequency descriptor', async () => {
@@ -28,16 +30,17 @@ describe('Test frequency related functions', () => {
         expect(freq_id).toEqual(null);
         freq_id = await DBF.getFreqId([]);
         expect(freq_id).toEqual(null);
-    });
-    
-    test('Returns null when not given frequency descriptor', async () => {
-        const freq_id = await DBF.getFreqId();
+        freq_id = await DBF.getFreqId();
         expect(freq_id).toEqual(null);
     });
     
     test('Returns correct num_days when given valid freqId', async () => {
-        const num_days = await DBF.getFreqNumDays(5);
+        let num_days = await DBF.getFreqNumDays(5);
         expect(num_days).toEqual(365);
+        num_days = await DBF.getFreqNumDays(3);
+        expect(num_days).toEqual(90);
+        num_days = await DBF.getFreqNumDays(1);
+        expect(num_days).toEqual(30);
     });
     
     test('Returns null when given invalid freqId', async () => {
@@ -49,15 +52,12 @@ describe('Test frequency related functions', () => {
         expect(num_days).toEqual(null);
         num_days = await DBF.getFreqNumDays([]);
         expect(num_days).toEqual(null);
-    });
-
-    test('Returns null when not given any freqId', async () => {
-        const num_days = await DBF.getFreqNumDays();
+        num_days = await DBF.getFreqNumDays();
         expect(num_days).toEqual(null);
     });
 });
 
-describe('Inserting new users in database', () => {
+describe('INSERTING NEW USERS IN DATABASE', () => {
     const validSub = {
         email: 'test@email.net',
         freq: 'monthly',
@@ -122,7 +122,7 @@ describe('Inserting new users in database', () => {
     })
 });
     
-describe('Selecting subscriber', () => {
+describe('SELECTING SUBSCRIBER', () => {
     let testSub = {
         email: 'test2@email.net',
         freq: 'yearly',
@@ -182,7 +182,7 @@ describe('Selecting subscriber', () => {
     });
 });
 
-describe('Updating subscriber and related tables', () => {
+describe('UPDATING SUBSCRIBER AND RELATED TABLES', () => {
     let tempSub = {
         email: 'updateme@email.com',
         freq: 'bimonthly',
@@ -273,7 +273,7 @@ describe('Updating subscriber and related tables', () => {
     });
 });
 
-describe('Deleting confirmation_codes', () => {
+describe('DELETING CONFIRMATION_CODES', () => {
     let sub = {
         email: 'deletecode',
         freq: 'monthly',
@@ -302,7 +302,7 @@ describe('Deleting confirmation_codes', () => {
     });
 });
 
-describe('Deleting user from database', () => {
+describe('DELETING USER FROM DATABASE', () => {
     let tempSub = {
         email: 'deleteme@email.com',
         freq: 'bimonthly',
