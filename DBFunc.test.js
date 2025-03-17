@@ -122,7 +122,7 @@ describe('INSERTING NEW USERS IN DATABASE', () => {
     })
 });
     
-describe('SELECTING SUBSCRIBER', () => {
+describe('SELECTING SUBSCRIBER AND RELATED TABLES', () => {
     let testSub = {
         email: 'test2@email.net',
         freq: 'yearly',
@@ -144,7 +144,7 @@ describe('SELECTING SUBSCRIBER', () => {
         await DBF.deleteSubscriberById(testId);
     });
 
-    test('Returns correct object when passing valid id', async () => {
+    test('Returns correct subscriber object when passing valid id', async () => {
         let sub = await DBF.selectSubscriberById(testId);
         expect(sub.id).toBe(testId);
     });
@@ -164,7 +164,7 @@ describe('SELECTING SUBSCRIBER', () => {
         expect(sub).toBeNull();
     });
 
-    test('Returns correct object when passing valid email', async () => {
+    test('Returns correct subscriber object when passing valid email', async () => {
         let sub = await DBF.selectSubscriberByEmail(testSub.email);
         expect(sub.id).toEqual(testId);
     });
@@ -180,6 +180,46 @@ describe('SELECTING SUBSCRIBER', () => {
         let sub = await DBF.selectSubscriberByEmail(null);
         expect(sub).toBeNull();
     });
+
+    test('Returns correct subscriber_measurements object when passing valid subId', async () => {
+        let sm = await DBF.selectSubMeasurementsBySubId(testId);
+        expect(Number(sm.age)).toEqual(testSub.age);
+        expect(sm.sex).toEqual(testSub.sex);
+        expect(Number(sm.est_tdee)).toEqual(testSub.est_tdee);
+        expect(Number(sm.est_bmr)).toEqual(testSub.est_bmr);
+        expect(sm.measurement_sys).toEqual(testSub.measurement_sys);
+        expect(Number(sm.height_value)).toEqual(testSub.height_value);
+        expect(Number(sm.weight_value)).toEqual(testSub.weight_value);
+    });
+
+    test('Returns null when passing invalid subId', async () => {
+        let sm = await DBF.selectSubMeasurementsBySubId();
+        expect(sm).toBeNull();
+        sm = await DBF.selectSubMeasurementsBySubId(-1);
+        expect(sm).toBeNull();
+        sm = await DBF.selectSubMeasurementsBySubId({});
+        expect(sm).toBeNull();
+        sm = await DBF.selectSubMeasurementsBySubId(String(testId));
+        expect(sm).toBeNull();
+    });
+
+    test('Returns valid confirmation_code when passing valid subId/code', async () => {
+        const cc1 = await DBF.selectConfirmationCodeBySubId(testId);
+        const cc2 = await DBF.selectConfirmationCodeByCode(cc1.code);
+        expect(cc1.code).toEqual(cc2.code);
+    });
+
+    test('Returns null when passing invalid subId/code', async () => {
+        let cc = await DBF.selectConfirmationCodeBySubId();
+        expect(cc).toBeNull();
+        cc = await DBF.selectConfirmationCodeBySubId(-1);
+        expect(cc).toBeNull();
+        cc = await DBF.selectConfirmationCodeByCode();
+        expect(cc).toBeNull();
+        cc = await DBF.selectConfirmationCodeBySubId({});
+        expect(cc).toBeNull();
+    });
+
 });
 
 describe('UPDATING SUBSCRIBER AND RELATED TABLES', () => {
