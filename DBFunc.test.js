@@ -121,6 +121,56 @@ describe('INSERTING NEW USERS IN DATABASE', () => {
         expect(badId).toBeNull();
     })
 });
+
+describe('CONFIRMING USERS', () => {
+    let sub = {
+        email: 'confirm@user.com',
+        freq: 'yearly',
+        age: 30,
+        sex: 'female',
+        est_tdee: 1800,
+        est_bmr: 1500,
+        measurement_sys: 'imperial',
+        height_value: 64,
+        weight_value: 160
+    };
+    let id;
+    let confirmed;
+
+    beforeAll(async () => {
+        id = await DBF.subscribe(sub);
+        confirmed = await DBF.confirmSubscriber(id);
+    });
+
+    afterAll(async () => {
+        await DBF.deleteSubscriberById(id);
+    });
+
+    test('Successfully confirms subscriber, deletes confirmation_code, creates scheduled_reminder', async () => {
+        expect(confirmed).toEqual(true);
+        const sub = await DBF.selectSubscriberById(id);
+        expect(sub.confirmed).toEqual(true);
+        expect(sub.date_confirmed).not.toBeNull();
+        const cc = await DBF.selectConfirmationCodeBySubId(id);
+        expect(cc).toBeNull();
+        const sched_r =  await DBF.selectScheduledReminderBySubId(id);
+        expect(sched_r).not.toBeNull();
+    });
+
+    test('Returns false when passing invalid id', async () => {
+        let result = await DBF.confirmSubscriber(-1);
+        expect(result).toEqual(false);
+        result = await DBF.confirmSubscriber();
+        expect(result).toEqual(false);
+        result = await DBF.confirmSubscriber({});
+        expect(result).toEqual(false);
+    });
+
+    test('Returns false when attempting to confirm user who is already confirmed', async () => {
+        let result = await DBF.confirmSubscriber(id);
+        expect(result).toEqual(false);
+    });
+});
     
 describe('SELECTING SUBSCRIBER AND RELATED TABLES', () => {
     let testSub = {
