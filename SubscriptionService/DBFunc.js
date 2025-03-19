@@ -21,12 +21,26 @@ const pool = new pg.Pool({
 });
 
 const NOT_FOUND = null, ERROR = null;
+const CONFIRM_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUB_CODE = 'unsubscribe_code'; // *** TO DO
 
+// TESTING FUNCTIONS
 // When testing, call inside afterAll()
 export function endPool() {
     pool.end();
 }
+// Truncate tables in test database after tests
+export async function truncateTestTables() {
+    if (process.env.TESTING) {
+        // *** TO DO
+        let query = 'TRUNCATE TABLE subscriber RESTART IDENTITY CASCADE;';
+        //query = 'TRUNCATE TABLE email_sent;';
+    }
+    else {
+        console.log('truncateTestTables function only available during TESTING');
+    }
+}
 
+// TRANSACTION BLOCK FUNCTIONS
 // When subscribing a new user, insert a new row into subscriber, subscriber_measurements, and confirmation_code.
 // Valid sub object should have email and freq properties.
 // Valid sub object should also have sex, age, measurement_sys, weight_value, height_value, est_bmr, and est_tdee.
@@ -42,7 +56,7 @@ export async function subscribe(sub) {
 
     const client = await pool.connect();
     try {
-        client.query('BEGIN'); // Start transaction block
+        await client.query('BEGIN'); // Start transaction block
         // Get freq_id for subscriber
         const freqId = await getFreqId(freq);
         // Insert subscriber, get id
@@ -80,6 +94,55 @@ export async function subscribe(sub) {
     }
     finally {
         client.release();
+    }
+}
+// Update subscriber confirmed to true, set date_confirmed, delete confirmation_code, insert scheduled_reminder.
+// Returns true/false based on success of transaction block.
+export async function confirmSubscriber(id) {
+    const user = await selectSubscriberById(id);
+    if (!user) {
+        console.log(`No user exists with id: ${id}`);
+        return false;
+    }
+    else if (user.confirmed == true) {
+        console.log(`User with id ${user.id} already confirmed. Date confirmed: ${user.date_confirmed}`);
+        return false;
+    }
+    else {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+            // Confirm subscriber
+            let query = {
+                text: 'UPDATE subscriber SET confirmed = true, date_confirmed = CURRENT_TIMESTAMP WHERE id = $1;',
+                values: [id]
+            };
+            await client.query(query);
+            // Delete confirmation_code
+            query = {
+                text: 'DELETE FROM confirmation_code WHERE sub_id = $1;',
+                values: [id]
+            };
+            await client.query(query);
+            // Create scheduled_reminder
+            const numDays = await getFreqNumDays(Number(user.freq_id));
+            console.log(`numDays: ${numDays}`); // *** DELETE
+            query = {
+                text: `INSERT INTO scheduled_reminder (sub_id, date_scheduled) VALUES ($1, CURRENT_TIMESTAMP + INTERVAL '${numDays} days');`,
+                values: [id]
+            }
+            await client.query(query);
+            await client.query("COMMIT");
+            return true;
+        }
+        catch (err) {
+            console.log(err);
+            await client.query("ROLLBACK");
+            return false;
+        }
+        finally {
+            client.release();
+        }
     }
 }
 
@@ -449,6 +512,136 @@ export async function deleteConfirmationCode(subId) {
     }
 }
 
+// UPDATE_CODE TABLE
+export async function insertUpdateCode(subId) {
+    // *** TO DO
+    if (!subId) {
+        return ERROR;
+    }
+
+    let codeExists = await selectUpdateCodeBySubId(subId);
+    if (!codeExists) {
+        // TO DO
+    }
+    else {
+        return ERROR;
+    }
+}
+async function selectUpdateCode(column, value) {
+    // *** TO DO: test
+    let queryString;
+    if (!column && !value) { // By default, return all 
+        queryString = 'SELECT * FROM update_code;';
+    }
+    else if (column && value && typeof column == 'string') {
+        switch (column) {
+            case 'code':
+                queryString = 'SELECT * FROM update_code WHERE code = $1;';
+                break;
+            case 'sub_id':
+                queryString = 'SELECT * FROM update_code WHERE sub_id = $1;';
+                break;
+            default:
+                return NOT_FOUND;
+        }
+    }
+    else {
+        return NOT_FOUND;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: queryString,
+            values: [value]
+        };
+        const {rows} = await client.query(query);
+        return ( rows[0] ? rows[0] : NOT_FOUND );
+    }
+    catch (err) {
+        return NOT_FOUND;
+    }
+    finally {
+        client.release();
+    }
+}
+export async function selectUpdateCodeBySubId(subId) {
+    const column = 'sub_id';
+    return selectUpdateCode(column, subId);
+}
+export async function selectUpdateCodeByCode(code) {
+    const column = 'code';
+    return selectUpdateCode(column, code);
+}
+
+// UNSUBSCRIBE_CODE TABLE
+export async function insertUnsubscribeCode(subId) {
+    // *** TO DO
+}
+async function selectUnsubscribeCode(column, value) {
+    // *** TO DO: test
+    let queryString;
+    if (!column && !value) { // By default, return all 
+        queryString = 'SELECT * FROM unsubscribe_code;';
+    }
+    else if (column && value && typeof column == 'string') {
+        switch (column) {
+            case 'code':
+                queryString = 'SELECT * FROM unsubscribe_code WHERE code = $1;';
+                break;
+            case 'sub_id':
+                queryString = 'SELECT * FROM unsubscribe_code WHERE sub_id = $1;';
+                break;
+            default:
+                return NOT_FOUND;
+        }
+    }
+    else {
+        return NOT_FOUND;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: queryString,
+            values: [value]
+        };
+        const {rows} = await client.query(query);
+        return ( rows[0] ? rows[0] : NOT_FOUND );
+    }
+    catch (err) {
+        return NOT_FOUND;
+    }
+    finally {
+        client.release();
+    }
+}
+export async function selectUnsubscribeCodeBySubId(subId) {
+    const column = 'sub_id';
+    return selectUnsubscribeCode(column, subId);
+}
+export async function selectUnsubscribeCodeByCode(code) {
+    const column = 'code';
+    return selectUnsubscribeCode(column, code);
+}
+
+// SCHEDULED_REMINDER TABLE
+export async function insertScheduledReminder(subId, numDays) {
+    // *** TO DO
+}
+async function selectScheduledReminder(column, value) {
+    // *** TO DO
+}
+export async function selectScheduledReminderBySubId(subId) {
+    const column = 'sub_id';
+    return selectScheduledReminder(column, subId);
+}
+// Returns all reminders scheduled for the given date (month, day, year)
+export async function selectScheduledReminderByDate(date) {
+    const column = 'date_scheduled';
+    return selectScheduledReminder(column, date);
+}
+
 // FREQUENCY TABLE
 // Return id that matches frequency descriptor. (Ex: 'monthly' -> 1, 'yearly' -> 5, etc.)
 export async function getFreqId(freq) {
@@ -524,3 +717,16 @@ async function generateCode() {
         client.release();
     }
 }
+
+/*
+// TESTING
+( async () => {
+    const badId = await confirmSubscriber(100);
+    console.log(`badId: ${badId}`);
+    const alreadyConfirmed = await confirmSubscriber(1);
+    console.log(`alreadyConfirmed: ${alreadyConfirmed}`);
+    const goodId = await confirmSubscriber(3);
+    console.log(`goodId: ${goodId}`);
+})();
+*/
+// ^^^ tested and worked! :) 3/19/25 1:13pm
