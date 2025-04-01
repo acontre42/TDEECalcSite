@@ -589,8 +589,7 @@ export async function selectUpdateCodeByCode(code) {
 export async function insertUnsubscribeCode(subId) {
     // *** TO DO
 }
-async function selectUnsubscribeCode(column, value) {
-    // *** TO DO: test
+async function selectUnsubscribeCode(column, value) { // *** TO DO: test
     let queryString;
     if (!column && !value) { // By default, return all 
         queryString = 'SELECT * FROM unsubscribe_code;';
@@ -730,6 +729,36 @@ export async function selectScheduledReminderByDate(month, day, year) {
         date = `'${year}-${month}-${day}'::date`;
     }
     return selectScheduledReminder(column, date);
+}
+// Update scheduled reminder based on subscriber's desired reminder frequency
+export async function updateScheduledReminder(subId) {
+    if (!subId || typeof subId !== 'number') {
+        return ERROR;
+    }
+
+    const sub = await selectSubscriberById(subId);
+    if (!sub) {
+        return ERROR;
+    }
+    
+    const freqId = Number(sub.freq_id);
+    const numDays = await getFreqNumDays(freqId);
+    const query = {
+        text: `UPDATE scheduled_reminder SET date_scheduled = (CURRENT_TIMESTAMP + INTERVAL '${numDays} days') WHERE sub_id = $1 RETURNING *;`,
+        values: [subId]
+    };
+    const client = await pool.connect();
+    try {
+        const {rows} = await client.query(query);
+        return (rows[0] ? rows[0] : ERROR);
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
 }
 
 // FREQUENCY TABLE
