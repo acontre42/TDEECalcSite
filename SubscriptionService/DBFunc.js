@@ -21,7 +21,7 @@ const pool = new pg.Pool({
 });
 
 const NOT_FOUND = null, ERROR = null;
-const CONFIRM_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUB_CODE = 'unsubscribe_code'; // *** TO DO
+const CONFIRM_C = 'confirmation_code', UPDATE_C = 'update_code', UNSUB_C = 'unsubscribe_code'; // Types of codes that can be generated
 
 // TESTING FUNCTIONS
 // When testing, call inside afterAll()
@@ -85,7 +85,7 @@ export async function subscribe(sub) {
         };
         await client.query(query);
         // Insert confirmation_code
-        let code = await generateCode();
+        let code = await generateCode(CONFIRM_C);
         if (!code) {
             throw new Error('Error generating available confirmation code.');
         }
@@ -811,8 +811,22 @@ export async function getFreqNumDays(freqId) {
 const MIN_CODE = 10000000, MAX_CODE = 99999999, MAX_TRIES = 5;
 // Generates code between 10000000 and 99999999 for confirmation purposes and checks its availability in database. 
 // Returns either code or null.
-// *** TO DO: add type argument to determine which code table to check
-async function generateCode() {
+async function generateCode(type) {
+    let selectCodeFunction;
+    switch (type) {
+        case CONFIRM_C:
+            selectCodeFunction = selectConfirmationCodeByCode;
+            break;
+        case UPDATE_C:
+            selectCodeFunction = selectUpdateCodeByCode;
+            break;
+        case UNSUB_C:
+            selectCodeFunction = selectUnsubscribeCodeByCode;
+            break;
+        default:
+            return ERROR;
+    }
+
     let code;
     let available;
     const client = await pool.connect();
@@ -820,7 +834,7 @@ async function generateCode() {
         let tries = 1;
         do {
             code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
-            const res = await selectConfirmationCodeByCode(code);
+            const res = await selectCodeFunction(code); //selectConfirmationCodeByCode(code);
             available = (res ? false : true);
             console.log(`TRY #${tries} Code: ${code} Available: ${available}`); // *** DELETE
             tries++;
