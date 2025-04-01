@@ -25,18 +25,29 @@ const CONFIRM_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUB_COD
 
 // TESTING FUNCTIONS
 // When testing, call inside afterAll()
-export function endPool() {
-    pool.end();
+export async function endPool() {
+    await pool.end();
 }
 // Truncate tables in test database after tests
 export async function truncateTestTables() {
     if (process.env.TESTING) {
-        // *** TO DO
-        let query = 'TRUNCATE TABLE subscriber RESTART IDENTITY CASCADE;';
-        //query = 'TRUNCATE TABLE email_sent;';
+        const client = await pool.connect();
+        try {
+            let query = 'TRUNCATE TABLE subscriber RESTART IDENTITY CASCADE;';
+            await client.query(query);
+            query = 'TRUNCATE TABLE email_sent;';
+            await client.query(query);
+            console.log('Tables in test database truncated, subscriber identity restarted');
+        }
+        catch (err) {
+            console.log(err);
+        }
+        finally {
+            client.release();
+        }
     }
     else {
-        console.log('truncateTestTables function only available during TESTING');
+        console.log('Error: truncateTestTables function only available during TESTING');
     }
 }
 
@@ -126,7 +137,6 @@ export async function confirmSubscriber(id) {
             await client.query(query);
             // Create scheduled_reminder
             const numDays = await getFreqNumDays(Number(user.freq_id));
-            console.log(`numDays: ${numDays}`); // *** DELETE
             query = {
                 text: `INSERT INTO scheduled_reminder (sub_id, date_scheduled) VALUES ($1, CURRENT_TIMESTAMP + INTERVAL '${numDays} days');`,
                 values: [id]
@@ -489,6 +499,7 @@ export async function updateConfirmationCode(subId, code) {
     }
 }
 // After confirming user, delete confirmation_code associated with their id. Returns number of rows deleted
+// *** TO DO: do i need this? confirmSubscriber is one transaction, and if code expires, everything related to subscriber is deleted
 export async function deleteConfirmationCode(subId) {
     if (!subId || typeof subId !== 'number') {
         return ERROR;
@@ -627,18 +638,97 @@ export async function selectUnsubscribeCodeByCode(code) {
 
 // SCHEDULED_REMINDER TABLE
 export async function insertScheduledReminder(subId, numDays) {
-    // *** TO DO
+    if (!subId || !numDays || typeof subId !== 'number' || typeof numDays !== 'number') {
+        return ERROR;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: `INSERT INTO scheduled_reminder (sub_id, date_scheduled) VALUES ($1, CURRENT_TIMESTAMP + INTERVAL '${numDays} days') RETURNING *;`,
+            values: [subId]
+        };
+        const {rows} = await client.query(query);
+        return rows[0]; // Return scheduled_reminder
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
 }
 async function selectScheduledReminder(column, value) {
-    // *** TO DO
+    let query;
+    let returnAll = false;
+    if (!column && !value) { // By default, return all 
+        query = 'SELECT * FROM scheduled_reminder;';
+        returnAll = true;
+    }
+    else if (column && value && typeof column == 'string') {
+        switch (column) {
+            case 'date_scheduled':
+                query = `SELECT * FROM scheduled_reminder WHERE date_scheduled >= ${value} AND date_scheduled < (${value} + INTERVAL '1 day');`;
+                returnAll = true;
+                break;
+            case 'sub_id':
+                query = {
+                    text: 'SELECT * FROM scheduled_reminder WHERE sub_id = $1;',
+                    values: [value]
+                };
+                break;
+            default:
+                return NOT_FOUND;
+        }
+    }
+    else {
+        return NOT_FOUND;
+    }
+
+    const client = await pool.connect();
+    try {
+        const {rows} = await client.query(query);
+        if (returnAll) {
+            return rows;
+        }
+        else {
+            return ( rows[0] ? rows[0] : NOT_FOUND );
+        }
+    }
+    catch (err) {
+        return NOT_FOUND;
+    }
+    finally {
+        client.release();
+    }
 }
+// Returns one reminder with matching sub_id
 export async function selectScheduledReminderBySubId(subId) {
     const column = 'sub_id';
     return selectScheduledReminder(column, subId);
 }
-// Returns all reminders scheduled for the given date (month, day, year)
-export async function selectScheduledReminderByDate(date) {
+// Returns ALL reminders scheduled for the given date (month, day, year)
+export async function selectScheduledReminderByDate(month, day, year) {
     const column = 'date_scheduled';
+    let date;
+    if (!month && !day && !year) { // By default, today's date
+        const today = new Date();
+        month = today.getMonth() + 1;
+        day = today.getDate();
+        year = today.getFullYear();
+        date = `'${year}-${month}-${day}'::date`;
+    }
+    else if (!month || !day || !year) { // If date given, need a month, day and year
+        console.log('Given dates must have a month, day, and year.');
+        return ERROR;
+    }
+    else {
+        if (typeof month !== 'number' || typeof day !== 'number' || typeof year != 'number') {
+            return ERROR;
+        }
+        date = `'${year}-${month}-${day}'::date`;
+    }
     return selectScheduledReminder(column, date);
 }
 
@@ -717,16 +807,3 @@ async function generateCode() {
         client.release();
     }
 }
-
-/*
-// TESTING
-( async () => {
-    const badId = await confirmSubscriber(100);
-    console.log(`badId: ${badId}`);
-    const alreadyConfirmed = await confirmSubscriber(1);
-    console.log(`alreadyConfirmed: ${alreadyConfirmed}`);
-    const goodId = await confirmSubscriber(3);
-    console.log(`goodId: ${goodId}`);
-})();
-*/
-// ^^^ tested and worked! :) 3/19/25 1:13pm
