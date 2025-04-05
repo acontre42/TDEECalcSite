@@ -5,8 +5,9 @@ beforeAll(() => {
     console.log("TESTING ENVIRONMENT? " + process.env.TESTING); // *** TESTING=true npm test, TESTING=true npm test -- dbfunc.test.js
 });
 
-afterAll(() => {
-    DBF.endPool();
+afterAll(async () => {
+    await DBF.truncateTestTables(); // *** TO DO: delete individual afterAll() in each describe?
+    await DBF.endPool();
 });
 
 describe('TEST FREQUENCY RELATED FUNCTIONS', () => {
@@ -69,21 +70,26 @@ describe('INSERTING NEW USERS IN DATABASE', () => {
         height_value: 70,
         weight_value: 200
     };
+    let id;
+
+    beforeAll(async () => {
+        id = await DBF.subscribe(validSub);
+    });
+
+    afterAll(async () => {
+        await DBF.deleteSubscriberById(id);
+    });
 
     test('Successfully inserts new user into database (subscriber, subscriber_measurements, confirmation_code)', async () => {
-        const id = await DBF.subscribe(validSub);
         expect(id).not.toBeNaN();
         const measurements = await DBF.selectSubMeasurementsBySubId(id);
         expect(measurements.sub_id).toEqual(id);
         const code = await DBF.selectConfirmationCodeBySubId(id);
         expect(code.sub_id).toEqual(id);
-        await DBF.deleteSubscriberById(id);
     });
 
     test('Returns null when trying to insert repeat subscriber', async () => {
-        const validId = await DBF.subscribe(validSub);
         const badId = await DBF.subscribe(validSub);
-        await DBF.deleteSubscriberById(validId);
         expect(badId).toBeNull();
     });
     
@@ -357,7 +363,7 @@ describe('UPDATING SUBSCRIBER AND RELATED TABLES', () => {
         const updatedCode = await DBF.updateConfirmationCode(id, newCode);
         expect(updatedCode.code).toEqual(newCode);
 
-        const date_sent = new Date(updatedCode.date_sent);
+        const date_sent = new Date(updatedCode.date_created);
         const date_expires = new Date(updatedCode.date_expires);
         expect(date_expires).toEqual(new Date(date_sent.setDate(date_sent.getDate() + 7))); // ensure expires 7 days later
     });

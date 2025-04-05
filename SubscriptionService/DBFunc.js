@@ -484,7 +484,7 @@ export async function updateConfirmationCode(subId, code) {
     const client = await pool.connect();
     try {
         let query = {
-            text: `UPDATE confirmation_code SET code = $1, date_sent = CURRENT_TIMESTAMP, date_expires = (CURRENT_TIMESTAMP + INTERVAL '7 days') WHERE sub_id = $2 RETURNING *;`,
+            text: `UPDATE confirmation_code SET code = $1, date_created = CURRENT_TIMESTAMP, date_expires = (CURRENT_TIMESTAMP + INTERVAL '7 days') WHERE sub_id = $2 RETURNING *;`,
             values: [code, subId]
         };
         const {rows} = await client.query(query);
@@ -834,7 +834,7 @@ async function generateCode(type) {
         let tries = 1;
         do {
             code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
-            const res = await selectCodeFunction(code); //selectConfirmationCodeByCode(code);
+            const res = await selectCodeFunction(code);
             available = (res ? false : true);
             console.log(`TRY #${tries} Code: ${code} Available: ${available}`); // *** DELETE
             tries++;
