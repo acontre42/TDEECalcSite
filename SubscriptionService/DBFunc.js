@@ -159,11 +159,12 @@ export async function confirmSubscriber(id) {
 // SUBSCRIBER TABLE
 // Select subscriber by email, id
 async function selectSubscriber(column, value) {
-    let queryString;
+    let query;
     if (!column && !value) {
-        queryString = `SELECT * FROM subscriber;`; // By default, all are returned
+        query = `SELECT * FROM subscriber;`; // By default, all are returned
     }
     else if (column && value && typeof column === 'string') {
+        let queryString;
         switch (column) {
             case 'email':
                 if (typeof value === 'string') {
@@ -184,17 +185,18 @@ async function selectSubscriber(column, value) {
             default:
                 return NOT_FOUND;
         }
+
+        query = {
+            text: queryString,
+            values: [value]
+        };
     }
     else {
         return NOT_FOUND;
     }
     
     const client = await pool.connect();
-    try {       
-        const query = {
-            text: queryString,
-            values: [value]
-        };
+    try {
         const {rows} = await client.query(query);
         if (!rows || !rows[0]) {
             return NOT_FOUND;
@@ -295,16 +297,18 @@ export async function deleteSubscriberById(id){
 // SUBSCRIBER_MEASUREMENTS TABLE
 // Select by sub_id
 async function selectSubMeasurements(column, value) {
-    let queryString;
-
+    let query;
     if (!column && !value) {
-        queryString = `SELECT * FROM subscriber_measurements;`; // By default, all are returned
+        query = `SELECT * FROM subscriber_measurements;`; // By default, all are returned
     }
     else if (column && value && typeof column === 'string') {
         switch (column) { 
             case 'sub_id':
                 if (typeof value === 'number') {
-                    queryString = 'SELECT * FROM subscriber_measurements WHERE sub_id = $1;';
+                    query = {
+                        text: 'SELECT * FROM subscriber_measurements WHERE sub_id = $1;',
+                        values: [value]
+                    }
                 }
                 else {
                     return NOT_FOUND;
@@ -319,11 +323,7 @@ async function selectSubMeasurements(column, value) {
     }
     
     const client = await pool.connect();
-    try {    
-        const query = {
-            text: queryString,
-            values: [value]
-        };   
+    try { 
         const {rows} = await client.query(query);
         if (!rows || !rows[0]) {
             return NOT_FOUND;
@@ -431,11 +431,12 @@ export async function updateSubMeasurements(subId, newValues) {
 
 // CONFIRMATION_CODE TABLE
 async function selectConfirmationCode(column, value) {
-    let queryString;
+    let query;
     if (!column && !value) { // By default, return all 
-        queryString = 'SELECT * FROM confirmation_code;';
+        query = 'SELECT * FROM confirmation_code;';
     }
     else if (column && value && typeof column == 'string') {
+        let queryString;
         switch (column) {
             case 'code':
                 queryString = 'SELECT * FROM confirmation_code WHERE code = $1;';
@@ -446,6 +447,11 @@ async function selectConfirmationCode(column, value) {
             default:
                 return NOT_FOUND;
         }
+
+        query = {
+            text: queryString,
+            values: [value]
+        };
     }
     else {
         return NOT_FOUND;
@@ -453,10 +459,6 @@ async function selectConfirmationCode(column, value) {
 
     const client = await pool.connect();
     try {
-        const query = {
-            text: queryString,
-            values: [value]
-        };
         const {rows} = await client.query(query);
         return ( rows[0] ? rows[0] : NOT_FOUND );
     }
@@ -525,7 +527,6 @@ export async function deleteConfirmationCode(subId) {
 
 // UPDATE_CODE TABLE
 export async function insertUpdateCode(subId) {
-    // *** TO DO
     if (!subId) {
         return ERROR;
     }
@@ -540,11 +541,12 @@ export async function insertUpdateCode(subId) {
 }
 async function selectUpdateCode(column, value) {
     // *** TO DO: test
-    let queryString;
+    let query;
     if (!column && !value) { // By default, return all 
-        queryString = 'SELECT * FROM update_code;';
+        query = 'SELECT * FROM update_code;';
     }
     else if (column && value && typeof column == 'string') {
+        let queryString;
         switch (column) {
             case 'code':
                 queryString = 'SELECT * FROM update_code WHERE code = $1;';
@@ -555,6 +557,11 @@ async function selectUpdateCode(column, value) {
             default:
                 return NOT_FOUND;
         }
+
+        query = {
+            text: queryString,
+            values: [value]
+        };
     }
     else {
         return NOT_FOUND;
@@ -562,10 +569,6 @@ async function selectUpdateCode(column, value) {
 
     const client = await pool.connect();
     try {
-        const query = {
-            text: queryString,
-            values: [value]
-        };
         const {rows} = await client.query(query);
         return ( rows[0] ? rows[0] : NOT_FOUND );
     }
@@ -590,11 +593,12 @@ export async function insertUnsubscribeCode(subId) {
     // *** TO DO
 }
 async function selectUnsubscribeCode(column, value) { // *** TO DO: test
-    let queryString;
+    let query;
     if (!column && !value) { // By default, return all 
-        queryString = 'SELECT * FROM unsubscribe_code;';
+        query = 'SELECT * FROM unsubscribe_code;';
     }
     else if (column && value && typeof column == 'string') {
+        let queryString;
         switch (column) {
             case 'code':
                 queryString = 'SELECT * FROM unsubscribe_code WHERE code = $1;';
@@ -605,6 +609,11 @@ async function selectUnsubscribeCode(column, value) { // *** TO DO: test
             default:
                 return NOT_FOUND;
         }
+
+        query = {
+            text: queryString,
+            values: [value]
+        };
     }
     else {
         return NOT_FOUND;
@@ -612,10 +621,6 @@ async function selectUnsubscribeCode(column, value) { // *** TO DO: test
 
     const client = await pool.connect();
     try {
-        const query = {
-            text: queryString,
-            values: [value]
-        };
         const {rows} = await client.query(query);
         return ( rows[0] ? rows[0] : NOT_FOUND );
     }
