@@ -6,7 +6,7 @@ beforeAll(() => {
 });
 
 afterAll(async () => {
-    await DBF.truncateTestTables(); // *** TO DO: delete individual afterAll() in each describe?
+    await DBF.truncateTestTables();
     await DBF.endPool();
 });
 
@@ -74,10 +74,6 @@ describe('INSERTING NEW USERS IN DATABASE', () => {
 
     beforeAll(async () => {
         id = await DBF.subscribe(validSub);
-    });
-
-    afterAll(async () => {
-        await DBF.deleteSubscriberById(id);
     });
 
     test('Successfully inserts new user into database (subscriber, subscriber_measurements, confirmation_code)', async () => {
@@ -148,10 +144,6 @@ describe('CONFIRMING USERS', () => {
         confirmed = await DBF.confirmSubscriber(id);
     });
 
-    afterAll(async () => {
-        await DBF.deleteSubscriberById(id);
-    });
-
     test('Successfully confirms subscriber, deletes confirmation_code, creates scheduled_reminder', async () => {
         expect(confirmed).toEqual(true);
         const sub = await DBF.selectSubscriberById(id);
@@ -194,10 +186,6 @@ describe('SELECTING SUBSCRIBER AND RELATED TABLES', () => {
 
     beforeAll(async () => {
         testId = await DBF.subscribe(testSub);
-    });
-
-    afterAll(async () => {
-        await DBF.deleteSubscriberById(testId);
     });
 
     test('Returns correct subscriber object when passing valid id', async () => {
@@ -296,10 +284,6 @@ describe('UPDATING SUBSCRIBER AND RELATED TABLES', () => {
         id = await DBF.subscribe(tempSub);
     });
 
-    afterAll(async () => {
-        await DBF.deleteSubscriberById(id);
-    });
-
     test('Successfully updates subscriber email', async () => {
         let newEmail = 'updated@email.com';
         let res = await DBF.updateSubscriberEmail(id, newEmail);
@@ -385,10 +369,6 @@ describe('DELETING CONFIRMATION_CODES', () => {
 
     beforeAll(async () => {
         id = await DBF.subscribe(sub);
-    });
-
-    afterAll(async () => {
-        await DBF.deleteSubscriberById(id);
     });
 
     test('Successfully deletes confirmation_code', async () => {
