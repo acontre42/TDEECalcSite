@@ -160,8 +160,10 @@ export async function confirmSubscriber(id) {
 // Select subscriber by email, id
 async function selectSubscriber(column, value) {
     let query;
+    let returnAll = false;
     if (!column && !value) {
         query = `SELECT * FROM subscriber;`; // By default, all are returned
+        returnAll = true;
     }
     else if (column && value && typeof column === 'string') {
         let queryString;
@@ -198,11 +200,11 @@ async function selectSubscriber(column, value) {
     const client = await pool.connect();
     try {
         const {rows} = await client.query(query);
-        if (!rows || !rows[0]) {
+        if (!rows[0]){
             return NOT_FOUND;
         }
         else {
-            return rows[0];
+            return (returnAll ? rows : rows[0]);
         }
     }
     catch (err) {
@@ -298,8 +300,10 @@ export async function deleteSubscriberById(id){
 // Select by sub_id
 async function selectSubMeasurements(column, value) {
     let query;
+    let returnAll = false;
     if (!column && !value) {
         query = `SELECT * FROM subscriber_measurements;`; // By default, all are returned
+        returnAll = true;
     }
     else if (column && value && typeof column === 'string') {
         switch (column) { 
@@ -325,11 +329,11 @@ async function selectSubMeasurements(column, value) {
     const client = await pool.connect();
     try { 
         const {rows} = await client.query(query);
-        if (!rows || !rows[0]) {
+        if (!rows[0]) {
             return NOT_FOUND;
         }
         else {
-            return rows[0];
+            return (returnAll ? rows : rows[0]);
         }
     }
     catch (err) {
@@ -432,8 +436,10 @@ export async function updateSubMeasurements(subId, newValues) {
 // CONFIRMATION_CODE TABLE
 async function selectConfirmationCode(column, value) {
     let query;
+    let returnAll = false;
     if (!column && !value) { // By default, return all 
         query = 'SELECT * FROM confirmation_code;';
+        returnAll = true;
     }
     else if (column && value && typeof column == 'string') {
         let queryString;
@@ -460,7 +466,12 @@ async function selectConfirmationCode(column, value) {
     const client = await pool.connect();
     try {
         const {rows} = await client.query(query);
-        return ( rows[0] ? rows[0] : NOT_FOUND );
+        if (!rows[0]) {
+            return NOT_FOUND;
+        }
+        else {
+            return (returnAll ? rows : rows[0]);
+        }
     }
     catch (err) {
         return NOT_FOUND;
@@ -540,10 +551,11 @@ export async function insertUpdateCode(subId) {
     }
 }
 async function selectUpdateCode(column, value) {
-    // *** TO DO: test
     let query;
+    let returnAll = false;
     if (!column && !value) { // By default, return all 
         query = 'SELECT * FROM update_code;';
+        returnAll = true;
     }
     else if (column && value && typeof column == 'string') {
         let queryString;
@@ -570,7 +582,12 @@ async function selectUpdateCode(column, value) {
     const client = await pool.connect();
     try {
         const {rows} = await client.query(query);
-        return ( rows[0] ? rows[0] : NOT_FOUND );
+        if (!rows[0]) {
+            return NOT_FOUND;
+        }
+        else {
+            return (returnAll ? rows : rows[0]);
+        }
     }
     catch (err) {
         return NOT_FOUND;
@@ -592,10 +609,12 @@ export async function selectUpdateCodeByCode(code) {
 export async function insertUnsubscribeCode(subId) {
     // *** TO DO
 }
-async function selectUnsubscribeCode(column, value) { // *** TO DO: test
+async function selectUnsubscribeCode(column, value) {
     let query;
+    let returnAll = false;
     if (!column && !value) { // By default, return all 
         query = 'SELECT * FROM unsubscribe_code;';
+        returnAll = true;
     }
     else if (column && value && typeof column == 'string') {
         let queryString;
@@ -622,7 +641,12 @@ async function selectUnsubscribeCode(column, value) { // *** TO DO: test
     const client = await pool.connect();
     try {
         const {rows} = await client.query(query);
-        return ( rows[0] ? rows[0] : NOT_FOUND );
+        if (!rows[0]) {
+            return NOT_FOUND;
+        }
+        else {
+            return (returnAll ? rows : rows[0]);
+        }
     }
     catch (err) {
         return NOT_FOUND;
@@ -665,22 +689,21 @@ export async function insertScheduledReminder(subId, numDays) {
 }
 async function selectScheduledReminder(column, value) {
     let query;
-    let returnAll = false;
+    let returnAll = true;
     if (!column && !value) { // By default, return all 
         query = 'SELECT * FROM scheduled_reminder;';
-        returnAll = true;
     }
     else if (column && value && typeof column == 'string') {
         switch (column) {
             case 'date_scheduled':
                 query = `SELECT * FROM scheduled_reminder WHERE date_scheduled >= ${value} AND date_scheduled < (${value} + INTERVAL '1 day');`;
-                returnAll = true;
                 break;
             case 'sub_id':
                 query = {
                     text: 'SELECT * FROM scheduled_reminder WHERE sub_id = $1;',
                     values: [value]
                 };
+                returnAll = false;
                 break;
             default:
                 return NOT_FOUND;
@@ -693,11 +716,11 @@ async function selectScheduledReminder(column, value) {
     const client = await pool.connect();
     try {
         const {rows} = await client.query(query);
-        if (returnAll) {
-            return rows;
+        if (!rows[0]) {
+            return NOT_FOUND;
         }
         else {
-            return ( rows[0] ? rows[0] : NOT_FOUND );
+            return (returnAll ? rows : rows[0]);
         }
     }
     catch (err) {
