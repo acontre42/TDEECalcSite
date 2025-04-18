@@ -524,7 +524,7 @@ export async function deleteConfirmationCode(subId) {
             text: 'DELETE FROM confirmation_code WHERE sub_id = $1 RETURNING *;',
             values: [subId]
         };
-        const {rows} = client.query(query);
+        const {rows} = await client.query(query);
         return rows.length;
     }
     catch (err) {
@@ -537,17 +537,44 @@ export async function deleteConfirmationCode(subId) {
 }
 
 // UPDATE_CODE TABLE
-export async function insertUpdateCode(subId) {
+// If no update_code exists for a sub id, insert a new record. If an older code exists, update record.
+// Returns record if successful or null if not.
+export async function newUpdateCode(subId) {
     if (!subId) {
         return ERROR;
     }
 
-    let codeExists = await selectUpdateCodeBySubId(subId);
-    if (!codeExists) {
-        // TO DO
+    const newCode = await generateCode(UPDATE_C);
+    if (!newCode) {
+        return ERROR;
+    }
+
+    let query;
+    const oldCode = await selectUpdateCodeBySubId(subId);
+    if (!oldCode) {
+        query = {
+            text: 'INSERT INTO update_code (sub_id, code) VALUES ($1, $2) RETURNING *;',
+            values: [subId, newCode]
+        };
     }
     else {
+        query = {
+            text: `UPDATE update_code SET code = $1, date_created = CURRENT_TIMESTAMP, date_expires = (CURRENT_TIMESTAMP + INTERVAL '7 days') WHERE sub_id = $2 RETURNING *;`,
+            values: [newCode, subId]
+        };
+    }
+
+    const client = await pool.connect();
+    try {
+        const {rows} = await client.query(query);
+        return rows[0];
+    }
+    catch (err) {
+        console.log(err);
         return ERROR;
+    }
+    finally {
+        client.release();
     }
 }
 async function selectUpdateCode(column, value) {
@@ -836,7 +863,7 @@ export async function getFreqNumDays(freqId) {
 }
 
 // CODE GENERATION
-const MIN_CODE = 10000000, MAX_CODE = 99999999, MAX_TRIES = 5;
+const MIN_CODE = 10000000, MAX_CODE = 99999999, MAX_TRIES = 15;
 // Generates code between 10000000 and 99999999 for confirmation purposes and checks its availability in database. 
 // Returns either code or null.
 async function generateCode(type) {
@@ -864,7 +891,6 @@ async function generateCode(type) {
             code = Math.floor(Math.random() * (MAX_CODE - MIN_CODE + 1) + MIN_CODE);
             const res = await selectCodeFunction(code);
             available = (res ? false : true);
-            console.log(`TRY #${tries} Code: ${code} Available: ${available}`); // *** DELETE
             tries++;
         } while (!available && tries <= MAX_TRIES);
 
