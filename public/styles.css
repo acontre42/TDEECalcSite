@@ -38,7 +38,7 @@ main {
     border-bottom: 1px solid;
 }
 
-.hidden-div {
+.hidden-elem {
     display: none;
 }
 

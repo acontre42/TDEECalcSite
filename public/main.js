@@ -2,7 +2,7 @@
 import CalCalc from "/CalCalc.js";
 
 // VARIABLES
-const METRIC = "metric", IMPERIAL = "imperial", MALE = "male", FEMALE = "female", HIDDEN_DIV_CLASS = "hidden-div";
+const METRIC = "metric", IMPERIAL = "imperial", MALE = "male", FEMALE = "female", HIDDEN_ELEM_CLASS = "hidden-elem";
 const INPUT_ID_STRINGS = ["age", "feet", "inches", "cm", "lbs", "kg"];
 const INPUT_ID_STRINGS_IMPERIAL = ["age", "feet", "inches", "lbs"];
 const INPUT_ID_STRINGS_METRIC = ["age", "cm", "kg"];
@@ -153,11 +153,11 @@ function isValidEmailFormat(emailString) {
 
 // MISCELLANEOUS FUNCTIONS
 function hideElem(elem) { 
-    elem.classList.add(HIDDEN_DIV_CLASS);
+    elem.classList.add(HIDDEN_ELEM_CLASS);
 }
 
 function unhideElem(elem) {
-    elem.classList.remove(HIDDEN_DIV_CLASS);
+    elem.classList.remove(HIDDEN_ELEM_CLASS);
 }
 // Returns chosen option from set of radio buttons with a given name.
 function getRadioValue(name) {
