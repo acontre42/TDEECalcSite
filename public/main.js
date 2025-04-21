@@ -1,8 +1,9 @@
 "use strict";
 import CalCalc from "/CalCalc.js";
+import * as Misc from '/MiscFunc.js';
 
 // VARIABLES
-const METRIC = "metric", IMPERIAL = "imperial", MALE = "male", FEMALE = "female", HIDDEN_ELEM_CLASS = "hidden-elem";
+const METRIC = "metric", IMPERIAL = "imperial", MALE = "male", FEMALE = "female";
 const INPUT_ID_STRINGS = ["age", "feet", "inches", "cm", "lbs", "kg"];
 const INPUT_ID_STRINGS_IMPERIAL = ["age", "feet", "inches", "lbs"];
 const INPUT_ID_STRINGS_METRIC = ["age", "cm", "kg"];
@@ -26,14 +27,14 @@ EMAIL_INPUT.addEventListener("change", checkEmailInput);
 // EVENT LISTENER FUNCTIONS
 function useImperial() {
     measurement_system = IMPERIAL;
-    document.querySelectorAll(".metric-sys").forEach((elem) => hideElem(elem));
-    document.querySelectorAll(".imperial-sys").forEach((elem) => unhideElem(elem));
+    document.querySelectorAll(".metric-sys").forEach((elem) => Misc.hideElem(elem));
+    document.querySelectorAll(".imperial-sys").forEach((elem) => Misc.unhideElem(elem));
 }
 
 function useMetric() {
     measurement_system = METRIC;
-    document.querySelectorAll(".metric-sys").forEach((elem) => unhideElem(elem));
-    document.querySelectorAll(".imperial-sys").forEach((elem) => hideElem(elem));
+    document.querySelectorAll(".metric-sys").forEach((elem) => Misc.unhideElem(elem));
+    document.querySelectorAll(".imperial-sys").forEach((elem) => Misc.hideElem(elem));
 }
 // Check input, calculate/display BMR & TDEE, hide/display subscription-related elements.
 function calculate() {
@@ -64,8 +65,8 @@ function calculate() {
     let tdee = CalCalc.calcTDEE(bmr, activityLvl);
     TDEE_SPAN.innerText = tdee;
 
-    unhideElem(EMAIL_DIV);
-    hideElem(SUBSCRIBED_DIV);
+    Misc.unhideElem(EMAIL_DIV);
+    Misc.hideElem(SUBSCRIBED_DIV);
 }
 // Set all user inputs and spans back to default, hide subscription-related divs.
 function clear() {
@@ -77,8 +78,8 @@ function clear() {
     TDEE_SPAN.innerText = '';
     EMAIL_INPUT.value = '';
     DISPLAY_SUMMARY.innerText = '';
-    hideElem(EMAIL_DIV);
-    hideElem(SUBSCRIBED_DIV);
+    Misc.hideElem(EMAIL_DIV);
+    Misc.hideElem(SUBSCRIBED_DIV);
     document.getElementById("age").focus();
 }
 
@@ -90,7 +91,7 @@ function subscribe(event) {
     }
 
     let email = String(EMAIL_INPUT.value);
-    if (isValidEmailFormat(email)) {
+    if (Misc.isValidEmailFormat(email)) {
         let person = getMeasurements();
         if (person == null) {
             console.log("Not all fields valid.");
@@ -102,19 +103,19 @@ function subscribe(event) {
             person["est_bmr"] = Number(BMR_SPAN.innerText);
             person["est_tdee"] = Number(TDEE_SPAN.innerText);
             console.log("Person: ", person);
-            hideElem(EMAIL_DIV);
-            unhideElem(SUBSCRIBED_DIV);
+            Misc.hideElem(EMAIL_DIV);
+            Misc.unhideElem(SUBSCRIBED_DIV);
             postData(person);
         }
     }
     else {
-        unhideElem(INVALID_EMAIL_SPAN);
+        Misc.unhideElem(INVALID_EMAIL_SPAN);
     }
 }
 
 function checkEmailInput(event) {
     let emailString = event.target.value;
-    !isValidEmailFormat(emailString) ? unhideElem(INVALID_EMAIL_SPAN) : hideElem(INVALID_EMAIL_SPAN);
+    !Misc.isValidEmailFormat(emailString) ? Misc.unhideElem(INVALID_EMAIL_SPAN) : Misc.hideElem(INVALID_EMAIL_SPAN);
 }
 
 // INPUT CHECKING FUNCTIONS
@@ -146,19 +147,7 @@ function allFieldsFilledOut() {
     return true;
 }
 
-function isValidEmailFormat(emailString) {
-    let regex = /^[\w!#$%&'*+-/=?^_`{|}~]{1,64}@[\w.]{1,63}\.[a-zA-Z0-9-]{1,63}$/i;
-    return regex.test(emailString);
-}
 
-// MISCELLANEOUS FUNCTIONS
-function hideElem(elem) { 
-    elem.classList.add(HIDDEN_ELEM_CLASS);
-}
-
-function unhideElem(elem) {
-    elem.classList.remove(HIDDEN_ELEM_CLASS);
-}
 // Returns chosen option from set of radio buttons with a given name.
 function getRadioValue(name) {
     let chosen;
