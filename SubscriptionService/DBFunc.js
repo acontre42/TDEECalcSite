@@ -951,12 +951,3 @@ async function generateCode(type) {
         client.release();
     }
 }
-
-(async () => {
-    let deleted = await deleteUnsubscribeCodeBySubId(3);
-    console.log('Num deleted: ', deleted);
-    deleted = await deleteUnsubscribeCodeBySubId();
-    console.log('Num deleted: ', deleted);
-    deleted = await deleteUnsubscribeCodeBySubId(4);
-    console.log('Num deleted: ', deleted);
-})();
