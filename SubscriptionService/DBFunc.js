@@ -631,10 +631,34 @@ export async function selectUpdateCodeByCode(code) {
     const column = 'code';
     return selectUpdateCode(column, code);
 }
+// Returns number of records deleted
+export async function deleteUpdateCodeBySubId(subId) {
+    if (!subId) {
+        return ERROR;
+    }
+
+    const query = {
+        text: 'DELETE FROM update_code WHERE sub_id = $1 RETURNING *;',
+        values: [subId]
+    };
+    const client = await pool.connect();
+    try {
+        const {rows} = await client.query(query);
+        return rows.length;
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
 
 // UNSUBSCRIBE_CODE TABLE
 export async function insertUnsubscribeCode(subId) {
     // *** TO DO
+    
 }
 async function selectUnsubscribeCode(column, value) {
     let query;
@@ -689,6 +713,29 @@ export async function selectUnsubscribeCodeBySubId(subId) {
 export async function selectUnsubscribeCodeByCode(code) {
     const column = 'code';
     return selectUnsubscribeCode(column, code);
+}
+// Returns number of records deleted.
+export async function deleteUnsubscribeCodeBySubId(subId) {
+    if (!subId) {
+        return ERROR;
+    }
+
+    const query = {
+        text: 'DELETE FROM unsubscribe_code WHERE sub_id = $1 RETURNING *;',
+        values: [subId]
+    };
+    const client = await pool.connect();
+    try {
+        const {rows} = await client.query(query);
+        return rows.length;
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
 }
 
 // SCHEDULED_REMINDER TABLE
@@ -904,3 +951,12 @@ async function generateCode(type) {
         client.release();
     }
 }
+
+(async () => {
+    let deleted = await deleteUnsubscribeCodeBySubId(3);
+    console.log('Num deleted: ', deleted);
+    deleted = await deleteUnsubscribeCodeBySubId();
+    console.log('Num deleted: ', deleted);
+    deleted = await deleteUnsubscribeCodeBySubId(4);
+    console.log('Num deleted: ', deleted);
+})();
