@@ -656,8 +656,35 @@ export async function deleteUpdateCodeBySubId(subId) {
 }
 
 // UNSUBSCRIBE_CODE TABLE
+// If there is no unsubscribe code currently associated with subId, insert a new one.
 export async function insertUnsubscribeCode(subId) {
-    // *** TO DO
+    if (!subId) {
+        return ERROR;
+    }
+
+    const existingCode = await selectUnsubscribeCodeBySubId(subId);
+    if (!existingCode) {
+        const newCode = await generateCode(UNSUB_C);
+        const query = {
+            text: 'INSERT INTO unsubscribe_code (sub_id, code) VALUES ($1, $2) RETURNING *;',
+            values: [subId, newCode]
+        };
+        const client = await pool.connect();
+        try {
+            const {rows} = await client.query(query);
+            return (rows[0] ? rows[0] : ERROR);
+        }
+        catch (err) {
+            console.log(err);
+            return ERROR;
+        }
+        finally {
+            client.release();
+        }
+    }
+    else {
+        return ERROR;
+    }
     
 }
 async function selectUnsubscribeCode(column, value) {
