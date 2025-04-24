@@ -11,7 +11,7 @@ main {
     align-items: center;
 }
 
-#header a, a:visited, a:focus, a:hover{
+#header a, #header a:visited, #header a:focus, #header a:hover {
     text-decoration: none;
     color: black;
 }
