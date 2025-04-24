@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Unsubscribe</title>
+        <meta name="description" content="Enter your email to begin the unsubscribing process.">
+        <meta name="keywords" content="unsubscribe, email">
+        <link rel="stylesheet" href="styles.css">
+    </head>
+    <body>
+        <header>
+            <h1 id="header">
+                <a href="/">Personal BMR & TDEE Calculator</a>
+            </h1>
+        </header>
+
+        <main>
+            <div id="unsubDiv">
+                <p>To begin the unsubscription process, please enter your email below.</p>
+                <form id="unsubForm">
+                    <label for="email">Email:</label>
+                    <input id="email" name="email" type="email">
+                    <span id="invalidEmail" class="hidden-elem">Invalid email format.</span>
+                    <br>
+                    <input type="submit" id="unsubscribe" value="Unsubscribe">
+                </form>
+            </div>
+
+            <div id="confirmationDiv" class="hidden-elem">
+                <p>Request received. </p>
+                <span>If the provided email is currently subscribed, you will receive a link in your email to complete the unsubscription process. </span>
+                <span>Please allow a few minutes to receive this email. The link will be active for 30 minutes. </span>
+                <span>If the link expires, you may repeat the process from the beginning.</span>
+            </div>
+        </main>
+
+        <footer>
+            <p>Personal BMR and TDEE Calculator 2024-2025</p>
+        </footer>
+        <script src="unsubscribe.js" type="module"></script>
+    </body>
+</html>
