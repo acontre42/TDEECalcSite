@@ -3,7 +3,7 @@ import * as Misc from './MiscFunc.js';
 
 const UNSUB_DIV = document.getElementById("unsubDiv");
 const EMAIL_INPUT = document.getElementById("email");
-const CONFIRMATION_DIV = document.getElementById("confirmationDiv");
+const RESULT_DIV = document.getElementById("resultDiv");
 const INVALID_EMAIL_SPAN = document.getElementById("invalidEmail");
 
 // EVENT LISTENERS
@@ -12,15 +12,30 @@ EMAIL_INPUT.addEventListener("focusout", checkEmailInput);
 
 
 // FUNCTIONS
-function unsubscribe(event) {
+async function unsubscribe(event) {
     event.preventDefault();
 
     const email = String(EMAIL_INPUT.value);
-    if (Misc.isValidEmailFormat(email)) {
-        // *** TO DO
+    if (Misc.isValidEmailFormat(email)) { 
+        try {
+            const response = await fetch("/unsubscribe", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({email: email})
+            });
+            const result = await response.json();
+            console.log(result);
+            
+        }
+        catch(err) {
+            console.log(err);
+            RESULT_DIV.innerHTML = `<p>There was an error processing this request. Please try again later.</p>`
+        }
 
         Misc.hideElem(UNSUB_DIV);
-        Misc.unhideElem(CONFIRMATION_DIV);
+        Misc.unhideElem(RESULT_DIV);
     }
 }
 
