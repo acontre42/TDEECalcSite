@@ -19,6 +19,7 @@ import * as Emailer from './Emailer.js';
 const ERROR = null;
 const EMAIL_CONFIRMATION = 'email confirmation', UPDATE_CONFIRMATION = 'update_confirmation';
 const usersToHandle = [];
+const unsubscribeRequests = []; // {subId, unsubscribeCode}
 const scheduledEmails = []; 
 //const handleUsersIntervalId = setInterval(handleUsers, 30000); // Handle users every 30 seconds.
 //const sendEmailIntervalId = setInterval(sendEmails, 60000); // Send emails once a minute.
@@ -54,6 +55,30 @@ export async function getUser(id) {
     }
 }
 
+// If a subscriber exists with the given email, create unsubscribe_code, schedule an email, return true.
+// If no subscriber exists or if there is already an associated unsubscribe_code, return false.
+export async function createUnsubscribeRequest(email) {
+    const sub = await DBF.selectSubscriberByEmail(email);
+    if (!sub) {
+        return false;
+    }
+    const subId = Number(sub.id);
+    
+    const unsubscribeCode = await DBF.insertUnsubscribeCode(subId);
+    if (!unsubscribeCode) {
+        return false;
+    }
+    
+    const unsubRequest = {
+        subId: subId,
+        unsubscribeCode: unsubscribeCode.code
+    };
+    unsubscribeRequests.push(unsubRequest);
+    console.log('UNSUB REQUESTS: ', unsubscribeRequests); // *** DELETE
+    return true;
+}
+
+// CONVERSION FUNCTIONS
 // Convert weight and height measurements into height_value and weight_value to match database fields
 function convertToDBFormat(user) {
     let sub = {...user};
@@ -104,7 +129,7 @@ function convertToInputFormat(sub) {
 // If confirmed, create pending_update. Schedule new update confirmation email.
 // If pending, update subscriber_measurements and confirmation_code. Schedule new confirmation email.
 // If not in database, subscribe. Schedule new confirmation email.
-async function handleUsers() {
+async function handleUsers() { // *** TO DO
     while (usersToHandle.length > 0) {
         const user = usersToHandle.pop();
         let schedEm;
@@ -133,7 +158,7 @@ async function handleUsers() {
 }
 
 // Send emails in batches
-function sendEmails() {
+function sendEmails() { // *** TO DO
     console.log(`Sending emails at ${new Date()}`);
     
     while (scheduledEmails.length > 0) {
@@ -145,4 +170,50 @@ function sendEmails() {
         */
     }
     
+}
+
+// VALIDATION FUNCTIONS
+// Check if subscriber id exists in database
+export async function isValidId(id) {
+    if (!id) {
+        return false;
+    }
+    const user = await DBF.selectSubscriberById(id);
+    return (user ? true : false);
+}
+
+// Check if code exists in corresponding table
+async function isValidCode(table, code) {
+    if (!table || !code) {
+        return false;
+    }
+
+    let result;
+    switch (table) {
+        case 'confirmation_code':
+            // TO DO
+            break;
+        case 'unsubscribe_code':
+            // TO DO
+            break;
+        case 'update_code':
+            // TO DO
+            break;
+        default:
+            return false;
+    }
+
+    return result;
+}
+export async function isValidConfirmationCode(code) {
+    const table = 'confirmation_code';
+    return isValidCode(table, code);
+}
+export async function isValidUnsubCode(code) {
+    const table = 'unsubscribe_code';
+    return isValidCode(table, code);
+}
+export async function isValidUpdateCode(code) {
+    const table = 'update_code';
+    return isValidCode(table, code);
 }

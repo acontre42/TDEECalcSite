@@ -9,16 +9,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 //console.log(__dirname, __filename);
 
-import * as Subscription from './SubscriptionAPI.js';
+import * as Subscription from './SubscriptionService/SubscriptionAPI.js';
+import * as Misc from './public/MiscFunc.js';
 
 app.use(express.static(__dirname + "/public"));
 app.use(express.json()); // Middleware to parse req.body
 
 app.post("/", async (req, res) => {
-    console.log("Received in /: ", req.body); // *** DELETE
     if (isValidRequest(req.body)) {
         const user = req.body;
-        const msg = await Subscription.addUser(user);
+        const msg = Subscription.addUser(user);
         res.status(200).send({message: msg});
     }
     else {
@@ -26,35 +26,85 @@ app.post("/", async (req, res) => {
     }
 });
 
-app.delete("/unsubscribe/:id/:code", (req, res) => {
+app.get('/unsubscribe', (req, res) => {
+    res.sendFile(__dirname + '/public/unsubscribe.html');
+});
+
+app.post('/unsubscribe', async (req, res) => {
+    const email = req.body.email;
+    const result = await Subscription.createUnsubscribeRequest(email);
+    if (result) {
+        res.status(200).send({message: `Request received to unsubscribe ${email}`});
+    }
+    else {
+        res.status(500).send({message: `There was a problem requesting to unsubscribe`});
+    }
+});
+
+app.delete("/unsubscribe/:id/:code", async (req, res) => {
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.code);
+    /*
     // *** TO DO:
     let valid;
+    try {
+        const existingUser = await Subscription.getUser(id);
+        const validCode = await Subscription.isValidUnsubCode(code);
+        if (!existingUser || !validCode) {
+            throw new Error();
+        }
+    }
+    catch (err) {
+        valid = false;
+    }
+    
     if (valid) {
         res.status(200).send({message: `Unsubscribed id ${id}`});
     }
     else {
-        res.status(404).send({message: `Id ${id} not found`})
+        res.status(404).send({message: `Id ${id} not found`});
     }
+    */
 });
 
-app.get('/update/:id/:code', function (req, res) {
+app.get('/measurements', async function (req, res) { // *** TO DO
+    const subId = req.subId;
+});
+
+app.get('/update/:id/:code', async function (req, res) {
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.id);
-    // *** TO DO: display calculator form with last saved values
+    /*
+    // *** TO DO
+    try {
+        const existingUser = await Subscription.getUser(id);
+        const validCode = await Subscription.isValidUpdateCode(code);
+        if (!existingUser || !validCode) {
+            throw new Error();
+        }
+        
+        const measurements = await Subscription.getUserMeasurements(id);
+        if (measurements) {
+            // TO DO: display calculator form with last saved values
+        }
+        else {
+            throw new Error();
+        }
+    }
+    catch (err) {
+        res.status(404).send({message: `Invalid code or id`});
+    }
+    */
 });
 
-app.put('/update/:id/:code', function (req, res) {
+app.put('/update/:id/:code', function (req, res) { // *** TO DO: update subscriber_measurements
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.id);
-    // *** TO DO: update subscriber_measurements
 });
 
-app.put('confirm/user/:id/:code', function(req, res) {
+app.put('confirm/user/:id/:code', function(req, res) { // *** TO DO: if id and code valid, confirm user
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.code);
-    // *** TO DO: if id and code valid, confirm user
 });
 
 app.listen(port, () => console.log(`Server is listening on port ${port}`));
@@ -68,7 +118,7 @@ function isValidRequest(body) {
         return false;
     }
 
-    if (!isValidEmailFormat(body.email)) {
+    if (!Misc.isValidEmailFormat(body.email)) {
         return false;
     }
 
@@ -88,9 +138,4 @@ function isValidRequest(body) {
     }
 
     return true;
-}
-// To double check email format
-function isValidEmailFormat(emailString) {
-    let regex = /^[\w!#$%&'*+-/=?^_`{|}~]{1,64}@[\w.]{1,63}\.[a-zA-Z0-9-]{1,63}$/i;
-    return regex.test(emailString);
 }
