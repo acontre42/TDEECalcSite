@@ -43,7 +43,7 @@ export function addUser(user) {
     }
 }
 
-// TO DO
+// *** TO DO
 export async function getUser(id) {
     let sub = await DBF.selectSubscriberById(id);
     if (!sub) {
@@ -173,7 +173,7 @@ function sendEmails() { // *** TO DO
 }
 
 // VALIDATION FUNCTIONS
-// Check if subscriber id exists in database
+// Check if subscriber id exists in database. Returns true/false
 export async function isValidId(id) {
     if (!id) {
         return false;
@@ -182,7 +182,7 @@ export async function isValidId(id) {
     return (user ? true : false);
 }
 
-// Check if code exists in corresponding table
+// Check if code exists in corresponding table. Returns true/false
 async function isValidCode(table, code) {
     if (!table || !code) {
         return false;
@@ -191,19 +191,19 @@ async function isValidCode(table, code) {
     let result;
     switch (table) {
         case 'confirmation_code':
-            // TO DO
+            result = await DBF.selectConfirmationCodeByCode(code);
             break;
         case 'unsubscribe_code':
-            // TO DO
+            result = await DBF.selectUnsubscribeCodeByCode(code);
             break;
         case 'update_code':
-            // TO DO
+            result = await DBF.selectUpdateCodeByCode(code);
             break;
         default:
             return false;
     }
 
-    return result;
+    return (result ? true : false);
 }
 export async function isValidConfirmationCode(code) {
     const table = 'confirmation_code';
