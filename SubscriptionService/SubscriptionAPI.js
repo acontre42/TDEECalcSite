@@ -21,8 +21,8 @@ const EMAIL_CONFIRMATION = 'email confirmation', UPDATE_CONFIRMATION = 'update_c
 const usersToHandle = [];
 const unsubscribeRequests = []; // {subId, unsubscribeCode}
 const scheduledEmails = []; 
-//const handleUsersIntervalId = setInterval(handleUsers, 30000); // Handle users every 30 seconds.
-//const sendEmailIntervalId = setInterval(sendEmails, 60000); // Send emails once a minute.
+const handleUsersIntervalId = setInterval(handleUsers, 30000); // Handle users every 30 seconds.
+const sendEmailIntervalId = setInterval(sendEmails, 60000); // Send emails once a minute.
 
 // Add user to usersToHandle array and send message back if no errors 
 // Returns a string to be displayed to user
@@ -130,20 +130,37 @@ function convertToInputFormat(sub) {
 // If pending, update subscriber_measurements and confirmation_code. Schedule new confirmation email.
 // If not in database, subscribe. Schedule new confirmation email.
 async function handleUsers() { // *** TO DO
+    console.log(`HANDLING USERS AT ${new Date()}:`, usersToHandle); // *** DELETE
     while (usersToHandle.length > 0) {
         const user = usersToHandle.pop();
         let schedEm;
 
         const existingSub = await DBF.selectSubscriberByEmail(user.email);
         if (existingSub) {
-            if (existingSub.confirmed) {
-                // *** TO DO
+            let subId = Number(existingSub.id);
+            let success;
+            if (existingSub.confirmed) { // Confirmed Subscriber
+                success = await newPendingUpdate(subId); // *** TO DO: create function
+                if (success) {
+                    schedEm = {
+                        id: subId,
+                        type: UPDATE_CONFIRMATION,
+                        subscriber: user
+                    };
+                }
             }
-            else {
-                // *** TO DO
+            else { // Pending Subscriber
+                success = await updatePendingSubscriber(subId); // *** TO DO: create function
+                if (success) {
+                    schedEm = {
+                        id: subId,
+                        type: EMAIL_CONFIRMATION,
+                        subscriber: user
+                    };
+                }
             }
         }
-        else {
+        else { // New Subscriber
             const id = await DBF.subscribe(user);
             if (id) {
                 schedEm = {
@@ -151,24 +168,27 @@ async function handleUsers() { // *** TO DO
                     type: EMAIL_CONFIRMATION,
                     subscriber: user
                 };
-                scheduledEmails.push(schedEm);
             }
+        }
+
+        if (schedEm) {
+            scheduledEmails.push(schedEm);
         }
     }
 }
 
 // Send emails in batches
 function sendEmails() { // *** TO DO
-    console.log(`Sending emails at ${new Date()}`);
+    console.log(`Sending emails at ${new Date()}:`, scheduledEmails);
     
-    while (scheduledEmails.length > 0) {
-        let schedEm = scheduledEmails.pop();
-        console.log(schedEm);
+    //while (scheduledEmails.length > 0) {
+        //let schedEm = scheduledEmails.pop();
+        //console.log(schedEm);
         /*
         const recipient = schedEm.subscriber.email;
         const category = schedEm.type;
         */
-    }
+    //}
     
 }
 
