@@ -155,6 +155,56 @@ export async function confirmSubscriber(id) {
         }
     }
 }
+// Delete and replace subscriber_measurements and confirmation_code for pending subscriber in one transaction block.
+// Returns true/false
+export async function updatePendingSubscriber(subId, newValues) { 
+    if (!subId || typeof subId !== 'number' || !newValues || typeof newValues !== 'object') {
+        return false;
+    }
+
+    const {sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee} = newValues;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        // Delete old subscriber_measurements
+        let query = {
+            text: `DELETE FROM subscriber_measurements WHERE sub_id = $1;`,
+            values: [subId]
+        };
+        await client.query(query);
+        // Delete old confirmation_code
+        query = {
+            text: `DELETE FROM confirmation_code WHERE sub_id = $1;`,
+            values: [subId]
+        };
+        await client.query(query);
+        // Insert new subscriber_measurements
+        query = {
+            text: `INSERT INTO subscriber_measurements (sub_id, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee)
+                    VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 );`,
+            values: [subId, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee]
+        };
+        await client.query(query);
+        // Insert new confirmation_code
+        const newCode = await generateCode(CONFIRM_C);
+        query = {
+            text: `INSERT INTO confirmation_code (sub_id, code) VALUES ($1, $2);`,
+            values: [subId, newCode]
+        };
+        await client.query(query);
+        await client.query('COMMIT');
+        return true;
+    }
+    catch (err) {
+        console.log(err);
+        await client.query('ROLLBACK');
+        return false;
+    }
+    finally {
+        client.release();
+    }
+}
 
 // SUBSCRIBER TABLE
 // Select subscriber by email, id

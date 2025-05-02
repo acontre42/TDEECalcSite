@@ -140,7 +140,7 @@ async function handleUsers() { // *** TO DO
             let subId = Number(existingSub.id);
             let success;
             if (existingSub.confirmed) { // Confirmed Subscriber
-                success = await newPendingUpdate(subId); // *** TO DO: create function
+                success = await DBF.newPendingUpdate(subId); // *** TO DO: create function
                 if (success) {
                     schedEm = {
                         id: subId,
@@ -150,7 +150,7 @@ async function handleUsers() { // *** TO DO
                 }
             }
             else { // Pending Subscriber
-                success = await updatePendingSubscriber(subId); // *** TO DO: create function
+                success = await DBF.updatePendingSubscriber(subId, user);
                 if (success) {
                     schedEm = {
                         id: subId,
@@ -181,14 +181,14 @@ async function handleUsers() { // *** TO DO
 function sendEmails() { // *** TO DO
     console.log(`Sending emails at ${new Date()}:`, scheduledEmails);
     
-    //while (scheduledEmails.length > 0) {
-        //let schedEm = scheduledEmails.pop();
-        //console.log(schedEm);
-        /*
+    while (scheduledEmails.length > 0) {
+        let schedEm = scheduledEmails.pop();
+        console.log(schedEm);
+        /* *** TO DO: send email, log email in database
         const recipient = schedEm.subscriber.email;
         const category = schedEm.type;
         */
-    //}
+    }
     
 }
 
