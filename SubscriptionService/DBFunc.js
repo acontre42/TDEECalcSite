@@ -155,6 +155,47 @@ export async function confirmSubscriber(id) {
         }
     }
 }
+// Create a pending_update and update_code for confirmed subscriber in one transaction block.
+// Returns true/false
+export async function updateConfirmedSubscriber(subId, newValues) {
+    if (!subId || typeof subId !== 'number' || !newValues || typeof newValues !== 'object') {
+        return false;
+    }
+
+    const updateCode = await generateCode(UPDATE_C);
+    if (!updateCode) {
+        return false;
+    }
+    const {sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee} = newValues;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        // Insert update_code
+        let query = {
+            text: `INSERT INTO update_code (sub_id, code) VALUES ($1, $2);`,
+            values: [subId, updateCode]
+        };
+        await client.query(query);
+        // Insert pending_update
+        query = {
+            text: `INSERT INTO pending_update (sub_id, code, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`,
+            values: [subId, updateCode, sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee]
+        };
+        await client.query(query);
+        await client.query('COMMIT');
+        return true;
+    }
+    catch (err) {
+        console.log(err);
+        await client.query('ROLLBACK');
+        return false;
+    }
+    finally {
+        client.release();
+    }
+}
 // Delete and replace subscriber_measurements and confirmation_code for pending subscriber in one transaction block.
 // Returns true/false
 export async function updatePendingSubscriber(subId, newValues) { 

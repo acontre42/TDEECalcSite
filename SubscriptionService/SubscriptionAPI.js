@@ -24,7 +24,7 @@ const scheduledEmails = [];
 const handleUsersIntervalId = setInterval(handleUsers, 30000); // Handle users every 30 seconds.
 const sendEmailIntervalId = setInterval(sendEmails, 60000); // Send emails once a minute.
 
-// Add user to usersToHandle array and send message back if no errors 
+// Convert user to DB format, add them to usersToHandle array, and send message back if no errors 
 // Returns a string to be displayed to user
 export function addUser(user) {
     const errorMessage = `There was an error while attempting to subscribe. Please try again later.`;
@@ -55,11 +55,11 @@ export async function getUser(id) {
     }
 }
 
-// If a subscriber exists with the given email, create unsubscribe_code, schedule an email, return true.
+// If a subscriber exists with the given email and is confirmed, create unsubscribe_code, schedule an email, return true.
 // If no subscriber exists or if there is already an associated unsubscribe_code, return false.
 export async function createUnsubscribeRequest(email) {
     const sub = await DBF.selectSubscriberByEmail(email);
-    if (!sub) {
+    if (!sub || !sub.confirmed) {
         return false;
     }
     const subId = Number(sub.id);
@@ -129,7 +129,7 @@ function convertToInputFormat(sub) {
 // If confirmed, create pending_update. Schedule new update confirmation email.
 // If pending, update subscriber_measurements and confirmation_code. Schedule new confirmation email.
 // If not in database, subscribe. Schedule new confirmation email.
-async function handleUsers() { // *** TO DO
+async function handleUsers() {
     console.log(`HANDLING USERS AT ${new Date()}:`, usersToHandle); // *** DELETE
     while (usersToHandle.length > 0) {
         const user = usersToHandle.pop();
@@ -140,7 +140,7 @@ async function handleUsers() { // *** TO DO
             let subId = Number(existingSub.id);
             let success;
             if (existingSub.confirmed) { // Confirmed Subscriber
-                success = await DBF.newPendingUpdate(subId); // *** TO DO: create function
+                success = await DBF.updateConfirmedSubscriber(subId, user);
                 if (success) {
                     schedEm = {
                         id: subId,
@@ -183,7 +183,7 @@ function sendEmails() { // *** TO DO
     
     while (scheduledEmails.length > 0) {
         let schedEm = scheduledEmails.pop();
-        console.log(schedEm);
+        //console.log(schedEm);
         /* *** TO DO: send email, log email in database
         const recipient = schedEm.subscriber.email;
         const category = schedEm.type;
