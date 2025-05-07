@@ -43,15 +43,15 @@ export function addUser(user) {
     }
 }
 
-// *** TO DO
-export async function getUser(id) {
-    let sub = await DBF.selectSubscriberById(id);
-    if (!sub) {
+// Convert subscriber_measurements from DB format into input format for the TDEE calculator.
+export async function getSubscriberMeasurements(id) {
+    let measurements = await DBF.selectSubMeasurementsBySubId(id);
+    if (!measurements) {
         return ERROR;
     }
     else {
-        const user = convertToInputFormat(sub);
-        return user;
+        const userMeasurements = convertToInputFormat(measurements);
+        return (userMeasurements ? userMeasurements : ERROR);
     }
 }
 
