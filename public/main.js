@@ -146,22 +146,8 @@ function allFieldsFilledOut() {
 
     return true;
 }
-
-
-// Returns chosen option from set of radio buttons with a given name.
-function getRadioValue(name) {
-    let chosen;
-    let options = document.querySelectorAll(`input[name="${name}"]`);
-    for (let option of options) {
-        if (option.checked == true) {
-            chosen = option.value;
-            break;
-        }
-    }
-    return chosen;
-}
-const getActivityLevel = getRadioValue.bind(null, "activityLevel");
-const getFreq = getRadioValue.bind(null, "freq");
+const getActivityLevel = Misc.getRadioValue.bind(null, "activityLevel");
+const getFreq = Misc.getRadioValue.bind(null, "freq");
 // Returns user's entered measurements if valid. Else, return null. Should be called after ensuring all fields have been filled out with allFieldsFilledOut().
 function getMeasurements() {
     const minValues = {

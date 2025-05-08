@@ -14,3 +14,16 @@ export function isValidEmailFormat(emailString) {
     let regex = /^[\w!#$%&'*+-/=?^_`{|}~]{1,64}@[\w.]{1,63}\.[a-zA-Z0-9-]{1,63}$/i;
     return regex.test(emailString);
 }
+
+// Returns chosen option from set of radio buttons with a given name.
+export function getRadioValue(name) {
+    let chosen;
+    let options = document.querySelectorAll(`input[name="${name}"]`);
+    for (let option of options) {
+        if (option.checked == true) {
+            chosen = option.value;
+            break;
+        }
+    }
+    return chosen;
+}
