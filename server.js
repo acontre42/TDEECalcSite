@@ -12,8 +12,13 @@ const __dirname = path.dirname(__filename);
 import * as Subscription from './SubscriptionService/SubscriptionAPI.js';
 import * as Misc from './public/MiscFunc.js';
 
+app.set('view engine', 'ejs'); // ***
 app.use(express.static(__dirname + "/public"));
 app.use(express.json()); // Middleware to parse req.body
+
+app.get('/', (req, res) => {
+    res.render('index.ejs');
+});
 
 app.post("/", async (req, res) => {
     if (isValidRequest(req.body)) {
@@ -27,7 +32,7 @@ app.post("/", async (req, res) => {
 });
 
 app.get('/unsubscribe', (req, res) => {
-    res.sendFile(__dirname + '/public/unsubscribe.html');
+    res.render('unsubscribe.ejs');
 });
 
 app.post('/unsubscribe', async (req, res) => {
@@ -72,20 +77,25 @@ app.get('/measurements', async function (req, res) { // *** TO DO
 });
 
 app.get('/update/:id/:code', async function (req, res) {
-    let id = parseInt(req.params.id);
-    let code = parseInt(req.params.id);
-    /*
-    // *** TO DO
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+    console.log(`id: ${id}, code: ${code}`);
+
     try {
-        const existingUser = await Subscription.getUser(id);
+        const validId = await Subscription.isValidId(id);
         const validCode = await Subscription.isValidUpdateCode(code);
-        if (!existingUser || !validCode) {
+        if (!validId|| !validCode) {
             throw new Error();
         }
         
-        const measurements = await Subscription.getUserMeasurements(id);
+        const validPair = await Subscription.updateCodeBelongsToSubId(code, id);
+        if (!validPair) {
+            throw new Error();
+        }
+        
+        const measurements = await Subscription.getSubscriberMeasurements(id);
         if (measurements) {
-            // TO DO: display calculator form with last saved values
+            res.render('update.ejs', { measurements: measurements} );
         }
         else {
             throw new Error();
@@ -94,7 +104,6 @@ app.get('/update/:id/:code', async function (req, res) {
     catch (err) {
         res.status(404).send({message: `Invalid code or id`});
     }
-    */
 });
 
 app.put('/update/:id/:code', function (req, res) { // *** TO DO: update subscriber_measurements

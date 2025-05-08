@@ -18,6 +18,7 @@ import * as Emailer from './Emailer.js';
 
 const ERROR = null;
 const EMAIL_CONFIRMATION = 'email confirmation', UPDATE_CONFIRMATION = 'update_confirmation';
+const CONFIRMATION_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUBSCRIBE_CODE = 'unsubscribe_code';
 const usersToHandle = [];
 const unsubscribeRequests = []; // {subId, unsubscribeCode}
 const scheduledEmails = []; 
@@ -125,6 +126,7 @@ function convertToInputFormat(sub) {
     return user;
 }
 
+// INTERVAL FUNCTIONS
 // Check if user already in database.
 // If confirmed, create pending_update. Schedule new update confirmation email.
 // If pending, update subscriber_measurements and confirmation_code. Schedule new confirmation email.
@@ -210,13 +212,13 @@ async function isValidCode(table, code) {
 
     let result;
     switch (table) {
-        case 'confirmation_code':
+        case CONFIRMATION_CODE:
             result = await DBF.selectConfirmationCodeByCode(code);
             break;
-        case 'unsubscribe_code':
+        case UNSUBSCRIBE_CODE:
             result = await DBF.selectUnsubscribeCodeByCode(code);
             break;
-        case 'update_code':
+        case UPDATE_CODE:
             result = await DBF.selectUpdateCodeByCode(code);
             break;
         default:
@@ -226,14 +228,54 @@ async function isValidCode(table, code) {
     return (result ? true : false);
 }
 export async function isValidConfirmationCode(code) {
-    const table = 'confirmation_code';
+    const table = CONFIRMATION_CODE;
     return isValidCode(table, code);
 }
 export async function isValidUnsubCode(code) {
-    const table = 'unsubscribe_code';
+    const table = UNSUBSCRIBE_CODE;
     return isValidCode(table, code);
 }
 export async function isValidUpdateCode(code) {
-    const table = 'update_code';
+    const table = UPDATE_CODE;
     return isValidCode(table, code);
+}
+
+// Check if code's sub_id matches given id. Returns true/false
+async function codeBelongsToSubId(type, code, id) {
+    if (!type || !code || !id) {
+        return false;
+    }
+
+    let record;
+    switch (type) {
+        case CONFIRMATION_CODE:
+            record = await DBF.selectConfirmationCodeByCode(code);
+            break;
+        case UPDATE_CODE:
+            record = await DBF.selectUpdateCodeByCode(code);
+            break;
+        case UNSUBSCRIBE_CODE:
+            record = await DBF.selectUnsubscribeCodeByCode(code);
+            break;
+        default: return false;
+    }
+
+    if (!record) {
+        return false;
+    }
+
+    const subId = Number(record.sub_id);
+    return (subId === id);
+}
+export async function confirmationCodeBelongsToSubId(code, id) {
+    const type = CONFIRMATION_CODE;
+    return codeBelongsToSubId(type, code, id);
+}
+export async function updateCodeBelongsToSubId(code, id) {
+    const type = UPDATE_CODE;
+    return codeBelongsToSubId(type, code, id);
+}
+export async function unsubscribeCodeBelongsToSubId(code, id) {
+    const type = UNSUBSCRIBE_CODE;
+    return codeBelongsToSubId(type, code, id);
 }

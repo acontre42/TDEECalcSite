@@ -9,7 +9,9 @@
     </head>
     <body>
         <header>
-            <h1 id="header">Personal BMR & TDEE Calculator</h1>
+            <h1 id="header">
+                <a href="/">Personal BMR & TDEE Calculator</a>
+            </h1>
         </header>
         <main>
             <div id="infoDiv">
@@ -21,38 +23,66 @@
                     <p>Enter your measurements:</p>
                     <div>
                         <span>Sex:</span>
-                        <input type="radio" id="male" name="sex" value="male" checked>
+                        <input type="radio" id="male" name="sex" value="male" 
+                            <% if (measurements.sex == 'male') { %>
+                                checked
+                            <% } %>
+                        >
                         <label for="male">Male</label>
-                        <input type="radio" id="female" name="sex" value="female">
+                        <input type="radio" id="female" name="sex" value="female"
+                            <% if (measurements.sex == 'female') { %>
+                                checked
+                            <% } %>
+                        >
                         <label for="female">Female</label>
                     </div>
 
                     <div>
                         <span>Age:</span>
-                        <input id="age" name="age" type="number">
+                        <input id="age" name="age" type="number" value="<%= measurements.age %>">
                         <label for="age">y.o.</label>
                     </div>
                     
                     <div id="systemDiv">
                         <span>Preferred measurement system:</span><br>
-                        <input type="radio" id="imperial" name="measurements" value="imperial" checked>
+                        <input type="radio" id="imperial" name="measurements" value="imperial"
+                            <% if (measurements.measurement_sys == 'imperial') { %>
+                                checked
+                            <% } %>
+                        >
                         <label for="imperial">Imperial</label>
-                        <input type="radio" id="metric" name="measurements" value="metric">
+                        <input type="radio" id="metric" name="measurements" value="metric" 
+                            <% if (measurements.measurement_sys == 'metric') { %>
+                                checked
+                            <% } %>
+                        >
                         <label for="metric">Metric</label>
                     </div>
 
                     <div>
                         <span>Height:</span>
                         <div id="impHeightDiv" class="imperial-sys">
-                            <input id="feet" name="feet" type="number">
+                            <input id="feet" name="feet" type="number"
+                                <% if (measurements.feet) { %>
+                                    value="<%= measurements.feet %>"
+                                <% } %>
+                            >
                             <label for="feet">ft</label>
 
-                            <input id="inches" name="inches" type="number">
+                            <input id="inches" name="inches" type="number"
+                                <% if (measurements.inches || measurements.inches === 0) { %>
+                                    value="<%= measurements.inches %>"
+                                <% } %>
+                            >
                             <label for="inches">in</label>
                         </div>
 
                         <div id="metHeightDiv" class="metric-sys hidden-elem">
-                            <input id="cm" name="cm" type="number">
+                            <input id="cm" name="cm" type="number"
+                                <% if (measurements.cm) { %>
+                                    value="<%= measurements.cm %>"
+                                <% } %>
+                            >
                             <label for="cm">cm</label>
                         </div>
                     </div>
@@ -60,19 +90,27 @@
                     <div>
                         <span>Weight:</span>
                         <div id="impWeightDiv" class="imperial-sys">
-                            <input id="lbs" name="lbs" type="number">
+                            <input id="lbs" name="lbs" type="number"
+                                <% if (measurements.lbs) { %>
+                                    value="<%= measurements.lbs %>"
+                                <% } %>
+                            >
                             <label for="lbs">lbs</label>
                         </div>
     
                         <div id="metWeightDiv" class="metric-sys hidden-elem">
-                            <input id="kg" name="kg" type="number">
+                            <input id="kg" name="kg" type="number"
+                                <% if (measurements.kg) { %>
+                                    value="<%= measurements.kg %>"
+                                <% } %>
+                            >
                             <label for="kg">kg</label>
                         </div>
                     </div>
 
                     <div id="activityDiv">
-                        <span>Your activity level:</span><br>
-                        <input type="radio" id="sedentary" name="activityLevel" value="sedentary" checked>
+                        <span>Your current activity level:</span><br>
+                        <input type="radio" id="sedentary" name="activityLevel" value="sedentary">
                         <label for="sedentary">Sedentary (Rarely active)</label><br>
                         <input type="radio" id="light" name="activityLevel" value="light">
                         <label for="light">Light (Active a few times a week)</label><br>
