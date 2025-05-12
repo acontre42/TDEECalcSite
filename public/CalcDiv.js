@@ -16,8 +16,6 @@ setView();
 // EVENT LISTENERS
 document.getElementById(IMPERIAL).addEventListener("click", useImperial);
 document.getElementById(METRIC).addEventListener("click", useMetric);
-document.getElementById("calculate").addEventListener("click", calculate);
-document.getElementById("clear").addEventListener("click", clear);
 
 // FUNCTIONS
 // Hide metric system divs
@@ -39,15 +37,11 @@ function setView() {
     (measurement_system == IMPERIAL ? useImperial() : useMetric());
 }
 
-// Check inputs & calculate/display BMR & TDEE.
-function calculate() {
-    if (!allFieldsFilledOut()) {
-        return;
-    }
-
+// Check inputs & calculate/display BMR & TDEE. Returns true/false
+export function calculate() {
     let person = getMeasurements();
     if (person == null) {
-        return;
+        return false;
     }
     // Display person's summary above estimates
     DISPLAY_SUMMARY.innerText = createSummary(person);
@@ -66,10 +60,15 @@ function calculate() {
     let activityLvl = getActivityLevel();
     let tdee = CalCalc.calcTDEE(bmr, activityLvl);
     TDEE_SPAN.innerText = tdee;
+    return true;
 }
 
-// Returns user's entered measurements if valid. Else, return null. Should be called after ensuring all fields have been filled out with allFieldsFilledOut().
-function getMeasurements() {
+// Returns user's entered measurements if valid. Else, return null.
+export function getMeasurements() {
+    if (!allFieldsFilledOut()) {
+        return null;
+    }
+
     const minValues = {
         "age": 12,
         "feet": 4,
@@ -119,7 +118,7 @@ function createSummary(person) {
 }
 
 // Set all user inputs and spans back to default.
-function clear() {
+export function clear() {
     setView();
     INPUT_ID_STRINGS.forEach((id) => document.getElementById(id).value = '');
     BMR_SPAN.innerText = '';
@@ -160,5 +159,5 @@ function allFieldsFilledOut() {
 
     return true;
 }
-const getActivityLevel = Misc.getRadioValue.bind(null, "activityLevel");
-const getFreq = Misc.getRadioValue.bind(null, "freq");
+export const getActivityLevel = Misc.getRadioValue.bind(null, "activityLevel");
+export const getFreq = Misc.getRadioValue.bind(null, "freq");
