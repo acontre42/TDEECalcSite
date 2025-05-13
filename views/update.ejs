@@ -16,6 +16,7 @@
         <main>
             <div id="infoDiv">
                 <p>To make updating your BMR and TDEE easier, we've prefilled the calculator with your last saved measurements.</p>
+                <p>On <%= measurements.date_last_updated %>, your estimated BMR was <%= measurements.est_bmr %> and your estimated TDEE was <%= measurements.est_tdee %>.</p>
             </div>
 
             <div id="userDiv">
@@ -135,6 +136,10 @@
                     <button id="save">Save Measurements</button>
                 </div>
 
+                <div id="resultDiv" class="hidden-elem">
+                    <!-- Save result here -->
+                </div>
+
            </div>
         </main>
         <footer>
@@ -145,7 +150,6 @@
             </div>
             <p>Personal BMR and TDEE Calculator 2024-2025</p>
         </footer>
-        <!--script src="update.js" type="module"></script-->
-        <script src="/CalcDiv.js" type="module"></script>
+        <script src="/update.js" type="module"></script>
     </body>
 </html>
