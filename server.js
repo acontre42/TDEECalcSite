@@ -3,6 +3,8 @@ import express from 'express';
 const app = express();
 const port = 3000;
 
+import cookieParser from 'cookie-parser';
+
 import {fileURLToPath} from 'url'; 
 import path from 'path'; 
 const __filename = fileURLToPath(import.meta.url);
@@ -12,9 +14,10 @@ const __dirname = path.dirname(__filename);
 import * as Subscription from './SubscriptionService/SubscriptionAPI.js';
 import * as Misc from './public/MiscFunc.js';
 
-app.set('view engine', 'ejs'); // ***
+app.set('view engine', 'ejs');
 app.use(express.static(__dirname + "/public"));
 app.use(express.json()); // Middleware to parse req.body
+app.use(cookieParser()); // Middleware for exposing cookie data as req.cookies property
 
 app.get('/', (req, res) => {
     res.render('index.ejs');
@@ -51,40 +54,40 @@ app.delete("/unsubscribe/:id/:code", async (req, res) => {
     let code = parseInt(req.params.code);
     /*
     // *** TO DO:
-    let valid;
     try {
-        const existingUser = await Subscription.getUser(id);
+        const validId = await Subscription.isValidId(id);
         const validCode = await Subscription.isValidUnsubCode(code);
-        if (!existingUser || !validCode) {
+        if (!validId || !validCode) {
             throw new Error();
         }
+        
+        const validPair = await Subscription.unsubscribeCodeBelongsToSubId(code, id);
+        if (!validPair) {
+            throw new Error();
+        }
+        
+        const deleted = await Subscription.unsubscribe(id);
+        if (!deleted) {
+            throw new Error();
+        }
+            
+        res.status(200).send({message: `Successfully unsubscribed id ${id}`});
     }
     catch (err) {
-        valid = false;
-    }
-    
-    if (valid) {
-        res.status(200).send({message: `Unsubscribed id ${id}`});
-    }
-    else {
-        res.status(404).send({message: `Id ${id} not found`});
+        res.status(404).send({message: `There was a problem unsubscribing.`});
     }
     */
-});
-
-app.get('/measurements', async function (req, res) { // *** TO DO
-    const subId = req.subId;
 });
 
 app.get('/update/:id/:code', async function (req, res) {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
-    console.log(`id: ${id}, code: ${code}`);
+    console.log(req.url, id, code); // *** DELETE
 
     try {
         const validId = await Subscription.isValidId(id);
         const validCode = await Subscription.isValidUpdateCode(code);
-        if (!validId|| !validCode) {
+        if (!validId || !validCode) {
             throw new Error();
         }
         
@@ -94,21 +97,37 @@ app.get('/update/:id/:code', async function (req, res) {
         }
         
         const measurements = await Subscription.getSubscriberMeasurements(id);
-        if (measurements) {
-            res.render('update.ejs', { measurements: measurements} );
-        }
-        else {
+        if (!measurements) {
             throw new Error();
         }
+        
+        res.cookie('id', id); // Set cookies
+        res.cookie('updateCode', code);
+        res.render('update.ejs', { measurements: measurements} );
     }
     catch (err) {
-        res.status(404).send({message: `Invalid code or id`});
+        res.status(400).send({message: `There was a problem while attempting to get saved measurements.`}); // *** TO DO: error page?
     }
 });
 
-app.put('/update/:id/:code', function (req, res) { // *** TO DO: update subscriber_measurements
-    let id = parseInt(req.params.id);
-    let code = parseInt(req.params.id);
+app.put('/update/:id/:code', async function (req, res) {
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+    const measurements = req.body;
+    console.log(req.url, id, code, measurements); // *** DELETE
+
+    const validPair = await Subscription.updateCodeBelongsToSubId(code, id);
+    if (!validPair) {
+        res.status(400).send({message: 'Invalid request.'})
+    }
+
+    const updated = await Subscription.updateMeasurements(id, measurements);
+    if (!updated) {
+        res.status(500).send({message: 'There was an error updating the saved measurements. Please try again.'});
+    }
+    else {
+        res.status(200).send({message: 'Measurements were successfully updated.'});
+    }
 });
 
 app.put('confirm/user/:id/:code', function(req, res) { // *** TO DO: if id and code valid, confirm user

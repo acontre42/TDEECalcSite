@@ -4,6 +4,9 @@ import * as CalcDiv from '/CalcDiv.js';
 import * as Misc from '/MiscFunc.js';
 
 const SAVE_DIV = document.getElementById("saveDiv");
+const RESULT_DIV = document.getElementById("resultDiv");
+const USER_DIV = document.getElementById("userDiv");
+const INFO_DIV = document.getElementById("infoDiv");
 
 document.getElementById("calculate").addEventListener("click", calculate);
 document.getElementById("clear").addEventListener("click", clear);
@@ -27,11 +30,37 @@ function clear() {
     CalcDiv.clear();
 }
 
-// If all fields valid and filled out, save new measurements.
-function save() {
+// If all fields valid and filled out, save new measurements and display result message.
+async function save() {
+    let cookies = Misc.getCookiesAsProps(document.cookie);
+    let id = cookies['id'];
+    let updateCode = cookies['updateCode'];
+    let path = `/update/${id}/${updateCode}`;
+
     let measurements = CalcDiv.getMeasurements();
     if (measurements) {
-        alert('Updated');
-        // *** TO DO: save measurements & display message
+        console.log('path: ', path); // *** DELETE
+        let message;
+        try {
+            const response = await fetch(path, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(measurements)
+            });
+            const result = await response.json();
+            message = result.message;
+        }
+        catch (err) {
+            console.log(err);
+            message = 'There was an error while attempting to update the measurements. Please try again.';
+        }
+
+        RESULT_DIV.innerHTML = `<p>${message}</p>`;
+        Misc.hideElem(SAVE_DIV);
+        Misc.hideElem(USER_DIV);
+        Misc.hideElem(INFO_DIV);
+        Misc.unhideElem(RESULT_DIV);
     }
 }

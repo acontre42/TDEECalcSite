@@ -79,6 +79,24 @@ export async function createUnsubscribeRequest(email) {
     return true;
 }
 
+// Convert measurements into DB format and call updateSubMeasurements function. If successful, delete update_code.
+// Return true/false based on result of updateSubMeasurements
+export async function updateMeasurements(subId, measurements) {
+    if (!subId || typeof subId != 'number' || !measurements || typeof measurements != 'object') {
+        return false;
+    }
+
+    const dbMeasurements = convertToDBFormat(measurements);
+    if (!dbMeasurements) {
+        return false;
+    }
+    
+    const updated = await DBF.updateSubMeasurements(subId, dbMeasurements);
+    await DBF.deleteUpdateCodeBySubId(subId);
+    console.log('updated record: ', updated); // *** DELETE
+    return (updated ? true : false);
+}
+
 // CONVERSION FUNCTIONS
 // Convert weight and height measurements into height_value and weight_value to match database fields
 function convertToDBFormat(user) {
