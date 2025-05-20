@@ -49,18 +49,46 @@ app.post('/unsubscribe', async (req, res) => {
     }
 });
 
-app.delete("/unsubscribe/:id/:code", async (req, res) => {
-    let id = parseInt(req.params.id);
-    let code = parseInt(req.params.code);
+app.get('/unsubscribe/:id/:code', async (req, res) => { // *** TO DO
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
     /*
-    // *** TO DO:
-    try {
+     try {
         const validId = await Subscription.isValidId(id);
         const validCode = await Subscription.isValidUnsubCode(code);
         if (!validId || !validCode) {
             throw new Error();
         }
         
+        const validPair = await Subscription.unsubscribeCodeBelongsToSubId(code, id);
+        if (!validPair) {
+            throw new Error();
+        }
+        
+        const path = `/unsubscribe/${id}/${code}`;
+        const response = await fetch(path, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const result = response.json();
+        const message = result.message;
+            
+        res.status(200).send({message: `Successfully unsubscribed id ${id}`});
+    }
+    catch (err) {
+        res.status(404).send({message: `There was a problem unsubscribing.`});
+    }
+    */
+});
+
+app.delete("/unsubscribe/:id/:code", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+    /*
+    // *** TO DO:
+    try {
         const validPair = await Subscription.unsubscribeCodeBelongsToSubId(code, id);
         if (!validPair) {
             throw new Error();
@@ -82,8 +110,11 @@ app.delete("/unsubscribe/:id/:code", async (req, res) => {
 app.get('/update/:id/:code', async function (req, res) {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
-    console.log(req.url, id, code); // *** DELETE
 
+    let error = {
+        code: 400,
+        message: 'Bad Request'
+    };
     try {
         const validId = await Subscription.isValidId(id);
         const validCode = await Subscription.isValidUpdateCode(code);
@@ -98,6 +129,10 @@ app.get('/update/:id/:code', async function (req, res) {
         
         const measurements = await Subscription.getSubscriberMeasurements(id);
         if (!measurements) {
+            error = {
+                code: 500,
+                message: 'There was a problem while attempting to get saved measurements from server.'
+            }
             throw new Error();
         }
         
@@ -106,7 +141,7 @@ app.get('/update/:id/:code', async function (req, res) {
         res.render('update.ejs', { measurements: measurements} );
     }
     catch (err) {
-        res.status(400).send({message: `There was a problem while attempting to get saved measurements.`}); // *** TO DO: error page?
+        res.status(error.code).render('error.ejs', { error: error });
     }
 });
 
@@ -114,11 +149,10 @@ app.put('/update/:id/:code', async function (req, res) {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
     const measurements = req.body;
-    console.log(req.url, id, code, measurements); // *** DELETE
 
     const validPair = await Subscription.updateCodeBelongsToSubId(code, id);
     if (!validPair) {
-        res.status(400).send({message: 'Invalid request.'})
+        return res.status(400).send({message: 'Invalid request.'})
     }
 
     const updated = await Subscription.updateMeasurements(id, measurements);
@@ -130,9 +164,17 @@ app.put('/update/:id/:code', async function (req, res) {
     }
 });
 
-app.put('confirm/user/:id/:code', function(req, res) { // *** TO DO: if id and code valid, confirm user
+app.put('confirm/user/:id/:code', function (req, res) { // *** TO DO: if id and code valid, confirm user
     let id = parseInt(req.params.id);
     let code = parseInt(req.params.code);
+});
+
+app.get('*', (req, res) => {
+    let error = {
+        code: 404,
+        message: 'Page Not Found'
+    };
+    res.status(404).render('error.ejs', { error: error} );
 });
 
 app.listen(port, () => console.log(`Server is listening on port ${port}`));
