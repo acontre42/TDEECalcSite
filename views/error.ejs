@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Personal BMR & TDEE Calculator</title>
+        <meta name="description" content="Error page. Something has gone wrong.">
+        <meta name="keywords" content="tdee, bmr, calculator, error">
+        <link rel="stylesheet" href="/css/styles.css">
+    </head>
+    
+    <body>
+        <header>
+            <h1 id="header">
+                <a href="/">Personal BMR & TDEE Calculator</a>
+            </h1>
+        </header>
+
+        <main>
+            <div id="errorDiv">
+                <h2 id="errorCode">
+                    ERROR <%= error.code %>
+                </h2>
+                <p id="errorMessage">
+                    <%= error.message %>
+                </p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Personal BMR and TDEE Calculator 2024-2025</p>
+        </footer>
+    </body>
+</html>
