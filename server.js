@@ -34,6 +34,66 @@ app.post("/", async (req, res) => {
     }
 });
 
+app.get('/confirm/user/:id/:code', async function (req, res) {
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+
+    let error = {
+        code: 400,
+        message: 'Bad Request'
+    };
+    try {
+        const validId = await Subscription.isValidId(id);
+        const validCode = await Subscription.isValidConfirmationCode(code);
+        if (!validId || !validCode) {
+            throw new Error();
+        }
+
+        const validPair = await Subscription.confirmationCodeBelongsToSubId(code, id);
+        if (!validPair) {
+            throw new Error();
+        }
+
+        const path = `http://localhost:${port}` + req.url; // Full URL for server component
+        const response = await fetch(path, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const result = await response.json();
+        res.render('success.ejs', {result: result});
+    }
+    catch (err) {
+        res.status(error.code).render('error.ejs', {error: error});
+    }
+});
+
+app.put('/confirm/user/:id/:code', async function (req, res) {
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+
+    let errorCode;
+    try {
+        const validPair = await Subscription.confirmationCodeBelongsToSubId(code, id);
+        if (!validPair) {
+            errorCode = 400;
+            throw new Error();
+        }
+
+        const confirmed = await Subscription.confirm(id);
+        if (!confirmed) {
+            errorCode = 500;
+            throw new Error();
+        }
+
+        res.status(200).send({message: `You've successfully confirmed your email.`});
+    }
+    catch (err) {
+        res.status(errorCode).send({message: `There was an error during the email confirmation process.`});
+    }
+});
+
 app.get('/unsubscribe', (req, res) => {
     res.render('unsubscribe.ejs');
 });
@@ -148,7 +208,7 @@ app.get('/update/:id/:code', async function (req, res) {
     }
 });
 
-app.put('/update/:id/:code', async function (req, res) {
+app.put('/update/:id/:code', async function (req, res) { // *** TO DO: redirect to success.ejs or error.ejs depending on result from client?
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
     const measurements = req.body;
@@ -165,16 +225,6 @@ app.put('/update/:id/:code', async function (req, res) {
     else {
         res.status(200).send({message: 'Measurements were successfully updated.'});
     }
-});
-
-app.get('/confirm/user/:id/:code', async function (req, res) { // *** TO DO
-    const id = parseInt(req.params.id);
-    const code = parseInt(req.params.code);
-});
-
-app.put('/confirm/user/:id/:code', async function (req, res) { // *** TO DO: if id and code valid, confirm user
-    const id = parseInt(req.params.id);
-    const code = parseInt(req.params.code);
 });
 
 app.get('*', (req, res) => {
