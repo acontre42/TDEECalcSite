@@ -39,7 +39,6 @@ async function save() {
 
     let measurements = CalcDiv.getMeasurements();
     if (measurements) {
-        console.log('path: ', path); // *** DELETE
         let message;
         try {
             const response = await fetch(path, {
