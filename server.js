@@ -77,7 +77,7 @@ app.get('/unsubscribe/:id/:code', async (req, res) => {
             }
         });
         const result = await response.json();
-        res.status(200).send({message: result.message}); // *** TO DO: page for successful unsubscribe
+        res.render('success.ejs', {result: result});
     }
     catch (err) {
         res.status(error.code).render('error.ejs', {error: error});
