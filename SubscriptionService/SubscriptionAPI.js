@@ -97,6 +97,16 @@ export async function updateMeasurements(subId, measurements) {
     return (updated ? true : false);
 }
 
+// Unsubscribes user and returns true/false depending on result.
+export async function unsubscribe(id) {
+    if (!id || typeof id != 'number') {
+        return false;
+    }
+
+    const deleted = await DBF.deleteSubscriberById(id);
+    return (deleted ? true : false);
+}
+
 // CONVERSION FUNCTIONS
 // Convert weight and height measurements into height_value and weight_value to match database fields
 function convertToDBFormat(user) {

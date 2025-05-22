@@ -49,10 +49,14 @@ app.post('/unsubscribe', async (req, res) => {
     }
 });
 
-app.get('/unsubscribe/:id/:code', async (req, res) => { // *** TO DO
+app.get('/unsubscribe/:id/:code', async (req, res) => {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
-    /*
+    
+    let error = {
+        code: 400,
+        message: 'Bad Request'
+    };
      try {
         const validId = await Subscription.isValidId(id);
         const validCode = await Subscription.isValidUnsubCode(code);
@@ -65,46 +69,45 @@ app.get('/unsubscribe/:id/:code', async (req, res) => { // *** TO DO
             throw new Error();
         }
         
-        const path = `/unsubscribe/${id}/${code}`;
+        const path = `http://localhost:${port}` + req.url; // Full URL for server component
         const response = await fetch(path, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        const result = response.json();
-        const message = result.message;
-            
-        res.status(200).send({message: `Successfully unsubscribed id ${id}`});
+        const result = await response.json();
+        res.status(200).send({message: result.message}); // *** TO DO: page for successful unsubscribe
     }
     catch (err) {
-        res.status(404).send({message: `There was a problem unsubscribing.`});
+        res.status(error.code).render('error.ejs', {error: error});
     }
-    */
+    
 });
 
-app.delete("/unsubscribe/:id/:code", async (req, res) => {
+app.delete('/unsubscribe/:id/:code', async (req, res) => {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
-    /*
-    // *** TO DO:
+    
+    let errorCode;
     try {
         const validPair = await Subscription.unsubscribeCodeBelongsToSubId(code, id);
         if (!validPair) {
+            errorCode = 400;
             throw new Error();
         }
         
         const deleted = await Subscription.unsubscribe(id);
         if (!deleted) {
+            errorCode = 500;
             throw new Error();
         }
             
-        res.status(200).send({message: `Successfully unsubscribed id ${id}`});
+        res.status(200).send({message: `You've been successfully unsubscribed.`});
     }
     catch (err) {
-        res.status(404).send({message: `There was a problem unsubscribing.`});
+        res.status(errorCode).send({message: `There was a problem during the unsubscription process.`});
     }
-    */
 });
 
 app.get('/update/:id/:code', async function (req, res) {
@@ -164,9 +167,14 @@ app.put('/update/:id/:code', async function (req, res) {
     }
 });
 
-app.put('confirm/user/:id/:code', function (req, res) { // *** TO DO: if id and code valid, confirm user
-    let id = parseInt(req.params.id);
-    let code = parseInt(req.params.code);
+app.get('/confirm/user/:id/:code', async function (req, res) { // *** TO DO
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+});
+
+app.put('/confirm/user/:id/:code', async function (req, res) { // *** TO DO: if id and code valid, confirm user
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
 });
 
 app.get('*', (req, res) => {
