@@ -62,6 +62,15 @@ app.get('/confirm/user/:id/:code', async function (req, res) {
             }
         });
         const result = await response.json();
+        
+        if (!response.ok) {
+            error = {
+                code: response.status,
+                message: result.message
+            };
+            throw new Error();
+        }
+
         res.render('success.ejs', {result: result});
     }
     catch (err) {
@@ -93,6 +102,20 @@ app.put('/confirm/user/:id/:code', async function (req, res) {
         res.status(errorCode).send({message: `There was an error during the email confirmation process.`});
     }
 });
+
+app.get('confirm/update/:id/:code', async function (req, res) {
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+    /*
+    
+    */
+});
+
+app.put('confirm/update/:id/:code', async function (req, res) {
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+    // *** TO DO
+})
 
 app.get('/unsubscribe', (req, res) => {
     res.render('unsubscribe.ejs');
@@ -137,6 +160,15 @@ app.get('/unsubscribe/:id/:code', async (req, res) => {
             }
         });
         const result = await response.json();
+        
+        if (!response.ok) {
+            error = {
+                code: response.status,
+                message: result.message
+            };
+            throw new Error();
+        }
+
         res.render('success.ejs', {result: result});
     }
     catch (err) {
