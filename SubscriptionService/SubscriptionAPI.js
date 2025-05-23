@@ -98,7 +98,7 @@ export async function updateMeasurements(subId, measurements) {
 }
 
 // Confirms subscriber's status and returns true/false depending on result
-export async function confirm(id) {
+export async function confirmUser(id) {
     if (!id || typeof id != 'number') {
         return false;
     }

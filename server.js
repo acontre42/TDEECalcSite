@@ -90,7 +90,7 @@ app.put('/confirm/user/:id/:code', async function (req, res) {
             throw new Error();
         }
 
-        const confirmed = await Subscription.confirm(id);
+        const confirmed = await Subscription.confirmUser(id);
         if (!confirmed) {
             errorCode = 500;
             throw new Error();
