@@ -246,6 +246,61 @@ export async function updatePendingSubscriber(subId, newValues) {
         client.release();
     }
 }
+// Update subscriber_measurements using measurements from pending_update, delete pending_update, delete update_code.
+// Returns true/false
+export async function confirmPendingUpdate(subId) {
+    if (!subId || typeof subId != 'number') {
+        console.log(`No subscriber exists with this id`);
+        return ERROR;
+    }
+
+    const updateCode = await selectUpdateCodeBySubId(subId);
+    if (!updateCode) {
+        console.log(`No update_code exists for this subscriber id`);
+        return ERROR;
+    }
+
+    const updatedValues = await selectPendingUpdateBySubId(subId);
+    if (!updatedValues) {
+        console.log(`No pending_update exists for this subscriber id`);
+        return NOT_FOUND;
+    }
+
+    const {sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee} = updatedValues;
+    
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        // Update measurements
+        let query = {
+            text: `UPDATE subscriber_measurements SET sex = $1, age = $2, measurement_sys = $3, weight_value = $4, height_value = $5, est_bmr = $6, est_tdee = $7, date_last_updated = CURRENT_TIMESTAMP WHERE sub_id = $8;`,
+            values: [sex, age, measurement_sys, weight_value, height_value, est_bmr, est_tdee, subId]
+        };
+        await client.query(query);
+        // Delete pending_update
+        query = {
+            text: `DELETE FROM pending_update WHERE sub_id = $1;`,
+            values: [subId]
+        };
+        await client.query(query);
+        // Delete update_code
+        query = {
+            text: `DELETE FROM update_code WHERE sub_id = $1;`,
+            values: [subId]
+        };
+        await client.query(query);
+        await client.query('COMMIT');
+        return true;
+    }
+    catch (err) {
+        console.log(err);
+        await client.query('ROLLBACK');
+        return false;
+    }
+    finally {
+        client.release();
+    }
+}
 
 // SUBSCRIBER TABLE
 // Select subscriber by email, id
@@ -517,6 +572,30 @@ export async function updateSubMeasurements(subId, newValues) {
     catch (err) {
         console.log(err);
         await client.query('ROLLBACK');
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
+
+// PENDING_UPDATE TABLE
+async function selectPendingUpdateBySubId(subId) {
+    if (!subId || typeof subId != 'number') {
+        return ERROR;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: `SELECT * FROM pending_update WHERE sub_id = $1;`,
+            values: [subId]
+        };
+        const {rows} = await client.query(query);
+        return (rows ? rows[0] : NOT_FOUND);
+    }
+    catch (err) {
+        console.log(err);
         return ERROR;
     }
     finally {

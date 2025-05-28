@@ -103,18 +103,72 @@ app.put('/confirm/user/:id/:code', async function (req, res) {
     }
 });
 
-app.get('confirm/update/:id/:code', async function (req, res) {
+app.get('/confirm/update/:id/:code', async function (req, res) {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
-    /*
     
-    */
+    let error = {
+        code: 400,
+        message: 'Bad Request'
+    };
+    try {
+        const validId = await Subscription.isValidId(id);
+        const validCode = await Subscription.isValidUpdateCode(code);
+        if (!validId || !validCode) {
+            throw new Error();
+        }
+
+        const validPair = await Subscription.updateCodeBelongsToSubId(code, id);
+        if (!validPair) {
+            throw new Error();
+        }
+        
+        const path = `http://localhost:${port}` + req.url;
+        const response = await fetch(path, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            error = {
+                code: response.status,
+                message: result.message
+            };
+            throw new Error();
+        }
+
+        res.render('success.ejs', {result: result});
+    }
+    catch (err) {
+        res.status(error.code).render('error.ejs', {error: error});
+    }
 });
 
-app.put('confirm/update/:id/:code', async function (req, res) {
+app.put('/confirm/update/:id/:code', async function (req, res) {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
-    // *** TO DO
+    
+    let errorCode;
+    try {
+        const validPair = await Subscription.updateCodeBelongsToSubId(code, id);
+        if (!validPair) {
+            errorCode = 400;
+            throw new Error();
+        }
+
+        const confirmed = await Subscription.confirmUpdate(id);
+        if (!confirmed) {
+            errorCode = 500;
+            throw new Error();
+        }
+
+        res.status(200).send({message: 'Your measurements were successfully updated.'});
+    }
+    catch (err) {
+        res.status(errorCode).send({message: 'There was an error while attempting to update your measurements.'});
+    }
 })
 
 app.get('/unsubscribe', (req, res) => {

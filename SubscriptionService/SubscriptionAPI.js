@@ -97,6 +97,16 @@ export async function updateMeasurements(subId, measurements) {
     return (updated ? true : false);
 }
 
+// Confirm pending update and return true/false depending on result
+export async function confirmUpdate(subId) {
+    if (!subId || typeof subId != 'number') {
+        return false;
+    }
+
+    const confirmed = await DBF.confirmPendingUpdate(subId);
+    return (confirmed ? true : false);
+}
+
 // Confirms subscriber's status and returns true/false depending on result
 export async function confirmUser(id) {
     if (!id || typeof id != 'number') {
