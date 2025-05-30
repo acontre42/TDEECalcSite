@@ -353,31 +353,6 @@ describe('UPDATING SUBSCRIBER AND RELATED TABLES', () => {
     });
 });
 
-describe('DELETING CONFIRMATION_CODES', () => {
-    let sub = {
-        email: 'deletecode',
-        freq: 'monthly',
-        age: 20,
-        sex: 'male',
-        est_tdee: 2500,
-        est_bmr: 1800,
-        measurement_sys: 'imperial',
-        height_value: 70,
-        weight_value: 200
-    };
-    let id;
-
-    beforeAll(async () => {
-        id = await DBF.subscribe(sub);
-    });
-
-    test('Successfully deletes confirmation_code', async () => {
-        await DBF.deleteConfirmationCode(id);
-        const deletedCode = await DBF.selectConfirmationCodeBySubId(id);
-        expect(deletedCode).toBeNull();
-    });
-});
-
 describe('DELETING USER FROM DATABASE', () => {
     let tempSub = {
         email: 'deleteme@email.com',

@@ -681,30 +681,6 @@ export async function updateConfirmationCode(subId, code) {
         client.release();
     }
 }
-// After confirming user, delete confirmation_code associated with their id. Returns number of rows deleted
-// *** TO DO: do i need this? confirmSubscriber is one transaction, and if code expires, everything related to subscriber is deleted
-export async function deleteConfirmationCode(subId) {
-    if (!subId || typeof subId !== 'number') {
-        return ERROR;
-    }
-
-    const client = await pool.connect();
-    try {
-        const query = {
-            text: 'DELETE FROM confirmation_code WHERE sub_id = $1 RETURNING *;',
-            values: [subId]
-        };
-        const {rows} = await client.query(query);
-        return rows.length;
-    }
-    catch (err) {
-        console.log(err);
-        return ERROR;
-    }
-    finally {
-        client.release();
-    }
-}
 
 // UPDATE_CODE TABLE
 // If no update_code exists for a sub id, insert a new record. If an older code exists, update record.
