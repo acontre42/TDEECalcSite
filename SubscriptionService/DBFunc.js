@@ -1036,6 +1036,57 @@ export async function updateScheduledReminder(subId) {
     }
 }
 
+// EMAIL_SENT TABLE
+// Email should have category, recipient, subject, contents. If email is missing date_sent property, CURRENT_TIMESTAMP will be used as default.
+export async function insertEmailSent(email) {
+    if (!email || typeof email != 'object') {
+        return ERROR;
+    }
+
+    const {date_sent, category, recipient, subject, contents} = email;
+    if (!category || !recipient || !subject || !contents) {
+        return ERROR;
+    }
+
+    let date;
+    if (date_sent && date_sent instanceof Date) {
+        const year = date_sent.getFullYear();
+        const month = date_sent.getMonth() + 1;
+        const day = date_sent.getDate();
+        const hours = date_sent.getHours();
+        const minutes = date_sent.getMinutes();
+        const seconds = date_sent.getSeconds();
+        date = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`; // 'yyyy-mm-dd hh:mm:ss'::timestamp
+    }
+
+    let query;
+    if (date) {
+        query = {
+            text: `INSERT INTO email_sent (date_sent, category, recipient, subject, contents) VALUES ($1::timestamp, $2, $3, $4, $5) RETURNING *;`,
+            values: [date, category, recipient, subject, contents]
+        };
+    }
+    else {
+        query = {
+            text: `INSERT INTO email_sent (category, recipient, subject, contents) VALUES ($1, $2, $3, $4) RETURNING *;`,
+            values: [category, recipient, subject, contents]
+        };
+    }
+    
+    const client = await pool.connect();
+    try {
+        const {rows} = await client.query(query);
+        return (rows ? rows[0] : ERROR);
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
+
 // FREQUENCY TABLE
 // Return id that matches frequency descriptor. (Ex: 'monthly' -> 1, 'yearly' -> 5, etc.)
 export async function getFreqId(freq) {
