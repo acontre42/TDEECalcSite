@@ -22,6 +22,7 @@ const pool = new pg.Pool({
 
 const NOT_FOUND = null, ERROR = null;
 const CONFIRM_C = 'confirmation_code', UPDATE_C = 'update_code', UNSUB_C = 'unsubscribe_code'; // Types of codes that can be generated
+const PENDING_U = 'pending_update';
 
 // TESTING FUNCTIONS
 // When testing, call inside afterAll()
@@ -1131,6 +1132,53 @@ export async function getFreqNumDays(freqId) {
     finally {
         client.release();
     }
+}
+
+// EXPIRED RECORDS
+// Returns an array of codes or pending_updates that have passed their expiration date and need to be deleted.
+async function selectExpiredRecords(type) {
+    let query;
+    switch (type) {
+        case CONFIRM_C:
+            query = `SELECT * FROM confirmation_code WHERE date_expires < CURRENT_TIMESTAMP;`;
+            break;
+        case UPDATE_C:
+            query = `SELECT * FROM update_code WHERE date_expires < CURRENT_TIMESTAMP;`;
+            break;
+        case UNSUB_C:
+            query = `SELECT * FROM unsubscribe_code WHERE date_expires < CURRENT_TIMESTAMP;`;
+            break;
+        case PENDING_U:
+            query = `SELECT * FROM pending_update WHERE date_expires < CURRENT_TIMESTAMP;`;
+            break;
+        default: 
+            return ERROR;
+    }
+
+    const client = await pool.connect();
+    try {
+        const {rows} = await client.query(query);
+        return (rows ? rows : NOT_FOUND);
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
+export async function selectExpiredConfirmationCodes() {
+    return selectExpiredRecords(CONFIRM_C);
+}
+export async function selectExpiredUpdateCodes() {
+    return selectExpiredRecords(UPDATE_C);
+}
+export async function selectExpiredUnsubscribeCodes() {
+    return selectExpiredRecords(UNSUB_C);
+}
+export async function selectExpiredPendingUpdates() {
+    return selectExpiredRecords(PENDING_U);
 }
 
 // CODE GENERATION
