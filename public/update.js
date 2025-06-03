@@ -7,6 +7,8 @@ const SAVE_DIV = document.getElementById("saveDiv");
 const RESULT_DIV = document.getElementById("resultDiv");
 const USER_DIV = document.getElementById("userDiv");
 const INFO_DIV = document.getElementById("infoDiv");
+const BMR_SPAN = document.getElementById("bmr");
+const TDEE_SPAN = document.getElementById("tdee");
 
 document.getElementById("calculate").addEventListener("click", calculate);
 document.getElementById("clear").addEventListener("click", clear);
@@ -38,6 +40,8 @@ async function save() {
     let path = `/update/${id}/${updateCode}`;
 
     let measurements = CalcDiv.getMeasurements();
+    measurements["est_bmr"] = Number(BMR_SPAN.innerText);
+    measurements["est_tdee"] = Number(TDEE_SPAN.innerText);
     if (measurements) {
         let message;
         try {
