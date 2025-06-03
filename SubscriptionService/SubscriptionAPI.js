@@ -104,7 +104,7 @@ export async function confirmUpdate(subId) {
     }
 
     const confirmed = await DBF.confirmPendingUpdate(subId);
-    return (confirmed ? true : false);
+    return confirmed;
 }
 
 // Confirms subscriber's status and returns true/false depending on result
@@ -114,7 +114,7 @@ export async function confirmUser(id) {
     }
 
     const confirmed = await DBF.confirmSubscriber(id);
-    return (confirmed ? true : false);
+    return confirmed;
 }
 
 // Unsubscribes user and returns true/false depending on result.
