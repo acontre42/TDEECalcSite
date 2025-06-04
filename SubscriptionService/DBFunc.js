@@ -603,6 +603,28 @@ async function selectPendingUpdateBySubId(subId) {
         client.release();
     }
 }
+async function selectPendingUpdateByCode(code) {
+    if (!code || typeof code != 'number') {
+        return ERROR;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: `SELECT * FROM pending_update WHERE code = $1;`,
+            values: [code]
+        };
+        const {rows} = await client.query(query);
+        return (rows ? rows[0] : NOT_FOUND);
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
 
 // CONFIRMATION_CODE TABLE
 async function selectConfirmationCode(column, value) {
@@ -1196,6 +1218,9 @@ async function generateCode(type) {
             break;
         case UNSUB_C:
             selectCodeFunction = selectUnsubscribeCodeByCode;
+            break;
+        case PENDING_U:
+            selectCodeFunction = selectPendingUpdateByCode;
             break;
         default:
             return ERROR;
