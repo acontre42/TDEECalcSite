@@ -237,17 +237,10 @@ export async function updatePendingSubscriber(subId, newValues) {
         client.release();
     }
 }
-// Update subscriber_measurements using measurements from pending_update, delete pending_update, delete update_code.
+// Update subscriber_measurements using measurements from pending_update, then delete pending_update.
 // Returns true/false
 export async function confirmPendingUpdate(subId) {
     if (!subId || typeof subId != 'number') {
-        console.log(`No subscriber exists with this id`);
-        return ERROR;
-    }
-
-    const updateCode = await selectUpdateCodeBySubId(subId);
-    if (!updateCode) {
-        console.log(`No update_code exists for this subscriber id`);
         return ERROR;
     }
 
@@ -271,12 +264,6 @@ export async function confirmPendingUpdate(subId) {
         // Delete pending_update
         query = {
             text: `DELETE FROM pending_update WHERE sub_id = $1;`,
-            values: [subId]
-        };
-        await client.query(query);
-        // Delete update_code
-        query = {
-            text: `DELETE FROM update_code WHERE sub_id = $1;`,
             values: [subId]
         };
         await client.query(query);
@@ -593,7 +580,7 @@ export async function selectPendingUpdateBySubId(subId) {
         client.release();
     }
 }
-export async function selectPendingUpdateByCode(code) { // *** TO DO: TEST
+export async function selectPendingUpdateByCode(code) {
     if (!code || typeof code != 'number') {
         return ERROR;
     }
