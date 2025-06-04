@@ -21,8 +21,7 @@ const pool = new pg.Pool({
 });
 
 const NOT_FOUND = null, ERROR = null;
-const CONFIRM_C = 'confirmation_code', UPDATE_C = 'update_code', UNSUB_C = 'unsubscribe_code'; // Types of codes that can be generated
-const PENDING_U = 'pending_update';
+const CONFIRM_C = 'confirmation_code', UPDATE_C = 'update_code', UNSUB_C = 'unsubscribe_code', PENDING_U = 'pending_update'; // Types of codes that can be generated
 
 // TESTING FUNCTIONS
 // When testing, call inside afterAll()
@@ -581,7 +580,7 @@ export async function updateSubMeasurements(subId, newValues) {
 }
 
 // PENDING_UPDATE TABLE
-async function selectPendingUpdateBySubId(subId) {
+export async function selectPendingUpdateBySubId(subId) {
     if (!subId || typeof subId != 'number') {
         return ERROR;
     }
@@ -603,7 +602,7 @@ async function selectPendingUpdateBySubId(subId) {
         client.release();
     }
 }
-async function selectPendingUpdateByCode(code) {
+export async function selectPendingUpdateByCode(code) { // *** TO DO: TEST
     if (!code || typeof code != 'number') {
         return ERROR;
     }
@@ -616,6 +615,29 @@ async function selectPendingUpdateByCode(code) {
         };
         const {rows} = await client.query(query);
         return (rows ? rows[0] : NOT_FOUND);
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
+// Delete pending_update by sub_id and return number of rows deleted
+export async function deletePendingUpdateBySubId(subId) { 
+    if (!subId || typeof subId != 'number') {
+        return ERROR;
+    }
+
+    const client = await pool.connect();
+    try {
+        const query = {
+            text: `DELETE FROM pending_update WHERE sub_id = $1 RETURNING *;`,
+            values: [subId]
+        };
+        const {rows} = await client.query(query);
+        return rows.length;
     }
     catch (err) {
         console.log(err);
