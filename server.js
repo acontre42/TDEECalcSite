@@ -113,12 +113,12 @@ app.get('/confirm/update/:id/:code', async function (req, res) {
     };
     try {
         const validId = await Subscription.isValidId(id);
-        const validCode = await Subscription.isValidUpdateCode(code);
+        const validCode = await Subscription.isValidPendingCode(code);
         if (!validId || !validCode) {
             throw new Error();
         }
 
-        const validPair = await Subscription.updateCodeBelongsToSubId(code, id);
+        const validPair = await Subscription.pendingCodeBelongsToSubId(code, id);
         if (!validPair) {
             throw new Error();
         }
@@ -152,7 +152,7 @@ app.put('/confirm/update/:id/:code', async function (req, res) {
     
     let errorCode;
     try {
-        const validPair = await Subscription.updateCodeBelongsToSubId(code, id);
+        const validPair = await Subscription.pendingCodeBelongsToSubId(code, id);
         if (!validPair) {
             errorCode = 400;
             throw new Error();
@@ -294,7 +294,7 @@ app.get('/update/:id/:code', async function (req, res) {
     }
 });
 
-app.put('/update/:id/:code', async function (req, res) { // *** TO DO: redirect to success.ejs or error.ejs depending on result from client?
+app.put('/update/:id/:code', async function (req, res) {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
     const measurements = req.body;

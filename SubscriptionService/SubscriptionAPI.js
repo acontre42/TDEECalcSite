@@ -18,7 +18,7 @@ import * as Emailer from './Emailer.js';
 
 const ERROR = null;
 const EMAIL_CONFIRMATION = 'email confirmation', UPDATE_CONFIRMATION = 'update_confirmation';
-const CONFIRMATION_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUBSCRIBE_CODE = 'unsubscribe_code';
+const CONFIRMATION_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUBSCRIBE_CODE = 'unsubscribe_code', PENDING_UPDATE = 'pending_update';
 const usersToHandle = [];
 const unsubscribeRequests = []; // {subId, unsubscribeCode}
 const scheduledEmails = []; 
@@ -269,6 +269,9 @@ async function isValidCode(table, code) {
         case UPDATE_CODE:
             result = await DBF.selectUpdateCodeByCode(code);
             break;
+        case PENDING_UPDATE:
+            result = await DBF.selectPendingUpdateByCode(code);
+            break;
         default:
             return false;
     }
@@ -285,6 +288,10 @@ export async function isValidUnsubCode(code) {
 }
 export async function isValidUpdateCode(code) {
     const table = UPDATE_CODE;
+    return isValidCode(table, code);
+}
+export async function isValidPendingCode(code) {
+    const table = PENDING_UPDATE;
     return isValidCode(table, code);
 }
 
@@ -304,6 +311,9 @@ async function codeBelongsToSubId(type, code, id) {
             break;
         case UNSUBSCRIBE_CODE:
             record = await DBF.selectUnsubscribeCodeByCode(code);
+            break;
+        case PENDING_UPDATE:
+            record = await DBF.selectPendingUpdateByCode(code);
             break;
         default: return false;
     }
@@ -325,5 +335,9 @@ export async function updateCodeBelongsToSubId(code, id) {
 }
 export async function unsubscribeCodeBelongsToSubId(code, id) {
     const type = UNSUBSCRIBE_CODE;
+    return codeBelongsToSubId(type, code, id);
+}
+export async function pendingCodeBelongsToSubId(code, id) {
+    const type = PENDING_UPDATE;
     return codeBelongsToSubId(type, code, id);
 }
