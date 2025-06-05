@@ -602,17 +602,17 @@ export async function selectPendingUpdateByCode(code) {
         client.release();
     }
 }
-// Delete pending_update by sub_id and return number of rows deleted
-export async function deletePendingUpdateBySubId(subId) { 
-    if (!subId || typeof subId != 'number') {
+// Delete pending_update by code and return number of rows deleted
+export async function deletePendingUpdateByCode(code) { 
+    if (!code || typeof code != 'number') {
         return ERROR;
     }
 
     const client = await pool.connect();
     try {
         const query = {
-            text: `DELETE FROM pending_update WHERE sub_id = $1 RETURNING *;`,
-            values: [subId]
+            text: `DELETE FROM pending_update WHERE code = $1 RETURNING *;`,
+            values: [code]
         };
         const {rows} = await client.query(query);
         return rows.length;
@@ -823,6 +823,28 @@ export async function deleteUpdateCodeBySubId(subId) {
         client.release();
     }
 }
+export async function deleteUpdateCodeByCode(code) {
+    if (!code) {
+        return ERROR;
+    }
+
+    const query = {
+        text: 'DELETE FROM update_code WHERE code = $1 RETURNING *;',
+        values: [code]
+    };
+    const client = await pool.connect();
+    try {
+        const {rows} = await client.query(query);
+        return rows.length;
+    }
+    catch (err) {
+        console.log(err);
+        return ERROR;
+    }
+    finally {
+        client.release();
+    }
+}
 
 // UNSUBSCRIBE_CODE TABLE
 // If there is no unsubscribe code currently associated with subId, insert a new one.
@@ -911,14 +933,14 @@ export async function selectUnsubscribeCodeByCode(code) {
     return selectUnsubscribeCode(column, code);
 }
 // Returns number of records deleted.
-export async function deleteUnsubscribeCodeBySubId(subId) {
-    if (!subId) {
+export async function deleteUnsubscribeCodeByCode(code) {
+    if (!code || typeof code != 'number') {
         return ERROR;
     }
 
     const query = {
-        text: 'DELETE FROM unsubscribe_code WHERE sub_id = $1 RETURNING *;',
-        values: [subId]
+        text: 'DELETE FROM unsubscribe_code WHERE code = $1 RETURNING *;',
+        values: [code]
     };
     const client = await pool.connect();
     try {
