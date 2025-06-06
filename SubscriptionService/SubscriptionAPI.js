@@ -15,15 +15,21 @@ dotenv.config({
 
 import * as DBF from './DBFunc.js';
 import * as Emailer from './Emailer.js';
+import * as Delete from './handlers/Delete.js';
 
 const ERROR = null;
+const THIRTY_SEC = 30000, ONE_MIN = 60000, ONE_HOUR = 3600000;
 const EMAIL_CONFIRMATION = 'email confirmation', UPDATE_CONFIRMATION = 'update_confirmation';
 const CONFIRMATION_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUBSCRIBE_CODE = 'unsubscribe_code', PENDING_UPDATE = 'pending_update';
 const usersToHandle = [];
 const unsubscribeRequests = []; // {subId, unsubscribeCode}
 const scheduledEmails = []; 
-const handleUsersIntervalId = setInterval(handleUsers, 30000); // Handle users every 30 seconds.
-const sendEmailIntervalId = setInterval(sendEmails, 60000); // Send emails once a minute.
+const handleUsersIntervalId = setInterval(handleUsers, THIRTY_SEC); // Handle users every 30 seconds.
+const sendEmailIntervalId = setInterval(sendEmails, ONE_MIN); // Send emails once a minute.
+const deleteConfirmationId = setInterval(Delete.deleteExpiredConfirmationCodes, ONE_HOUR); // Check/delete expired confirmation_codes every hour.
+const deleteUpdateId = setInterval(Delete.deleteExpiredUpdateCodes, ONE_HOUR); // Check/delete expired update_codes every hour.
+const deletePendingId = setInterval(Delete.deleteExpiredPendingUpdates, ONE_MIN); // Check/delete expired pending_updates every minute.
+const deleteUnsubscribeId = setInterval(Delete.deleteExpiredUnsubscribeCodes, ONE_MIN); // Check/delete expired unsubscribe_codes every minute.
 
 // Convert user to DB format, add them to usersToHandle array, and send message back if no errors 
 // Returns a string to be displayed to user
