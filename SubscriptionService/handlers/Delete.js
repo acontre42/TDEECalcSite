@@ -1,7 +1,7 @@
 "use strict";
 import * as DBF from '../DBFunc.js';
 import * as fs from 'fs';
-const LOG_FILE_PATH = '../logs/delete.txt';
+const LOG_FILE_PATH = './logs/delete.txt';
 
 const CONFIRMATION = 'confirmation_code', UPDATE = 'update_code', UNSUBSCRIBE = 'unsubscribe_code', PENDING = 'pending_update';
 export const deleteExpiredConfirmationCodes = deleteExpired.bind(null, CONFIRMATION, DBF.selectExpiredConfirmationCodes, DBF.deleteSubscriberById);
@@ -12,7 +12,6 @@ export const deleteExpiredPendingUpdates = deleteExpired.bind(null, PENDING, DBF
 // Get array of expired records and delete them from database. Log number deleted
 // Confirmation codes delete all subscriber-related records from database by subId while all others delete single records by code
 async function deleteExpired(table, selectFunc, deleteFunc) {
-    console.log(`Deleting expired records from ${table} table at ${new Date()}`);
     let numDeleted = 0;
 
     const records = await selectFunc();

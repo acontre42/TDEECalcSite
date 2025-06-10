@@ -14,20 +14,25 @@ dotenv.config({
 });
 
 import * as DBF from './DBFunc.js';
-import * as Emailer from './Emailer.js';
 import * as Delete from './handlers/Delete.js';
+import * as Send from './handlers/Send.js';
+//import * as Scheduler from './handlers/Scheduler.js';
 
 const ERROR = null;
-const THIRTY_SEC = 30000, ONE_MIN = 60000, ONE_HOUR = 3600000;
-const EMAIL_CONFIRMATION = 'email confirmation', UPDATE_CONFIRMATION = 'update_confirmation';
+const THIRTY_SEC = 30000, ONE_MIN = 60000, THIRTY_MIN = 1800000, ONE_HOUR = 3600000;
 const CONFIRMATION_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUBSCRIBE_CODE = 'unsubscribe_code', PENDING_UPDATE = 'pending_update';
 const usersToHandle = [];
-const unsubscribeRequests = []; // {subId, unsubscribeCode}
-const scheduledEmails = []; 
+const subRequests = []; // {email, subId, confirmationCode}
+const pendingRequests = []; // {email, subId, pendingCode}
+const unsubRequests = []; // {email, subId, unsubscribeCode} 
+// INTERVAL IDs
 const handleUsersIntervalId = setInterval(handleUsers, THIRTY_SEC); // Handle users every 30 seconds.
-const sendEmailIntervalId = setInterval(sendEmails, ONE_MIN); // Send emails once a minute.
-const deleteConfirmationId = setInterval(Delete.deleteExpiredConfirmationCodes, ONE_HOUR); // Check/delete expired confirmation_codes every hour.
-const deleteUpdateId = setInterval(Delete.deleteExpiredUpdateCodes, ONE_HOUR); // Check/delete expired update_codes every hour.
+const handleSubRequestsId = setInterval(() => Send.sendConfirmationEmail(subRequests), THIRTY_SEC); // Handle subRequests every minute.
+const handlePendingReqId = setInterval(() => Send.sendPendingEmail(pendingRequests), ONE_MIN); // Handle pendingRequests every minute.
+const handleUnsubReqId = setInterval(() => Send.sendUnsubscribeEmail(unsubRequests), ONE_MIN); // Handle unsubRequests every minute.
+//const handleSchedulerId = setInterval(Scheduler.scheduleReminders, ONE_HOUR); // Check/schedule reminders every hour.
+const deleteConfirmationId = setInterval(Delete.deleteExpiredConfirmationCodes, THIRTY_MIN); // Check/delete expired confirmation_codes every hour.
+const deleteUpdateId = setInterval(Delete.deleteExpiredUpdateCodes, THIRTY_MIN); // Check/delete expired update_codes every hour.
 const deletePendingId = setInterval(Delete.deleteExpiredPendingUpdates, ONE_MIN); // Check/delete expired pending_updates every minute.
 const deleteUnsubscribeId = setInterval(Delete.deleteExpiredUnsubscribeCodes, ONE_MIN); // Check/delete expired unsubscribe_codes every minute.
 
@@ -76,12 +81,13 @@ export async function createUnsubscribeRequest(email) {
         return false;
     }
     
-    const unsubRequest = {
+    const request = {
+        email: sub.email,
         subId: subId,
-        unsubscribeCode: unsubscribeCode.code
+        unsubscribeCode: Number(unsubscribeCode.code)
     };
-    unsubscribeRequests.push(unsubRequest);
-    console.log('UNSUB REQUESTS: ', unsubscribeRequests); // *** DELETE
+    unsubRequests.push(request);
+    
     return true;
 }
 
@@ -189,7 +195,7 @@ async function handleUsers() {
     console.log(`HANDLING USERS AT ${new Date()}:`, usersToHandle); // *** DELETE
     while (usersToHandle.length > 0) {
         const user = usersToHandle.pop();
-        let schedEm;
+        let request;
 
         const existingSub = await DBF.selectSubscriberByEmail(user.email);
         if (existingSub) {
@@ -198,54 +204,41 @@ async function handleUsers() {
             if (existingSub.confirmed) { // Confirmed Subscriber
                 success = await DBF.updateConfirmedSubscriber(subId, user);
                 if (success) {
-                    schedEm = {
-                        id: subId,
-                        type: UPDATE_CONFIRMATION,
-                        subscriber: user
+                    let pendingUpdate = await DBF.selectPendingUpdateBySubId(subId);
+                    request = {
+                        email: existingSub.email,
+                        subId: subId,
+                        pendingCode: Number(pendingUpdate.code)
                     };
+                    pendingRequests.push(request);
                 }
             }
             else { // Pending Subscriber
                 success = await DBF.updatePendingSubscriber(subId, user);
                 if (success) {
-                    schedEm = {
-                        id: subId,
-                        type: EMAIL_CONFIRMATION,
-                        subscriber: user
+                    let confirmationCode = await DBF.selectConfirmationCodeBySubId(subId);
+                    request = {
+                        email: existingSub.email,
+                        subId: subId,
+                        confirmationCode: Number(confirmationCode.code)
                     };
+                    subRequests.push(request);
                 }
             }
         }
         else { // New Subscriber
             const id = await DBF.subscribe(user);
             if (id) {
-                schedEm = {
-                    id: id,
-                    type: EMAIL_CONFIRMATION,
-                    subscriber: user
+                let confirmationCode = await DBF.selectConfirmationCodeBySubId(id);
+                request = {
+                    email: user.email,
+                    subId: id,
+                    confirmationCode: Number(confirmationCode.code)
                 };
+                subRequests.push(request);
             }
         }
-
-        if (schedEm) {
-            scheduledEmails.push(schedEm);
-        }
     }
-}
-
-// Send emails in batches
-function sendEmails() { // *** TO DO
-    console.log(`Sending emails at ${new Date()}:`, scheduledEmails);
-    
-    while (scheduledEmails.length > 0) {
-        let schedEm = scheduledEmails.pop();
-        //console.log(schedEm);
-        /* *** TO DO: send email, log email in database
-        const recipient = schedEm.subscriber.email;
-        const category = schedEm.type;
-        */
-    }
-    
 }
 
 // VALIDATION FUNCTIONS
