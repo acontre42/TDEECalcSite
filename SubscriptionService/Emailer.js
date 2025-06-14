@@ -1,4 +1,4 @@
-// Emailer.js composes emails depending on type and sends them out.
+// Emailer.js composes emails depending on the category, sends them out, and logs them into database.
 "use strict"; 
 
 import {fileURLToPath} from 'url'; 
@@ -45,13 +45,13 @@ async function send(email) {
     };
 
     let success;
-    transporter.sendMail(mailOptions, function(error, info) {
+    transporter.sendMail(mailOptions, async function(error, info) {
         if (error) {
             console.log(error);
             success = false;
         }
         else {
-            // *** TO DO: log in database
+            await DBF.insertEmailSent(email);
             console.log(`Verification email sent to ${email.recipient}`);
             console.log(`Response: ${info.response}`);
             success = true;
@@ -62,12 +62,12 @@ async function send(email) {
 }
 
 // Retrieves correct email template and calls send function. Returns true/false.
-export async function sendEmail(type, recipient, subId, code) {
-    if (!type || !recipient || !subId || !code) {
+export async function sendEmail(category, recipient, subId, code) {
+    if (!category || !recipient || !subId || !code) {
         return false;
     }
 
-    let email = composeEmail(type, subId, code);
+    let email = composeEmail(category, subId, code);
 
     if (!email) {
         console.log('Error creating email'); // *** DELETE
@@ -75,21 +75,22 @@ export async function sendEmail(type, recipient, subId, code) {
     }
     else {
         email.recipient = recipient;
-        console.log(`To: ${email.recipient} \n Subject: ${email.subject} \n Contents: ${email.contents} \n\n`); // *** DELETE
+        email.category = category;
+        console.log(email); // *** DELETE
         return true; // *** DELETE
 
         //return send(email);
     }
 }
 
-// Return email of desired type
-function composeEmail(type, subId, code) {
+// Return email of desired category
+function composeEmail(category, subId, code) {
     const UNSUBSCRIBE_URL = BASE_URL + 'unsubscribe';
     const UNSUBSCRIBE_INFO = `\nTo stop receiving emails, please follow instructions at ${UNSUBSCRIBE_URL}`;
 
     let link = BASE_URL;
     let email = {};
-    switch (type) {
+    switch (category) {
         case EMAIL_CONFIRM:
             link += `confirm/user/${subId}/${code}`;
             email.subject = `Please confirm your email to start receiving reminders!`;

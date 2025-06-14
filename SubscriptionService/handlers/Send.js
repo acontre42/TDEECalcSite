@@ -7,7 +7,7 @@ export async function sendConfirmationEmail(requests) {
         return;
     }
 
-    const TYPE = Emailer.EMAIL_CONFIRM;
+    const EMAIL_CATEGORY = Emailer.EMAIL_CONFIRM;
 
     while (requests.length > 0) {
         let request = requests.pop();
@@ -16,7 +16,7 @@ export async function sendConfirmationEmail(requests) {
             continue;
         }
 
-        await Emailer.sendEmail(TYPE, email, subId, confirmationCode);
+        await Emailer.sendEmail(EMAIL_CATEGORY, email, subId, confirmationCode);
     }
 }
 
@@ -26,7 +26,7 @@ export async function sendPendingEmail(requests) {
         return;
     }
 
-    const TYPE = Emailer.UPDATE_CONFIRM;
+    const EMAIL_CATEGORY = Emailer.UPDATE_CONFIRM;
 
     while (requests.length > 0) {
         let request = requests.pop();
@@ -35,7 +35,7 @@ export async function sendPendingEmail(requests) {
             continue;
         }
 
-        await Emailer.sendEmail(TYPE, email, subId, pendingCode);
+        await Emailer.sendEmail(EMAIL_CATEGORY, email, subId, pendingCode);
     }
 }
 
@@ -46,7 +46,7 @@ export async function sendUnsubscribeEmail(requests) {
         return;
     }
 
-    const TYPE = Emailer.UNSUB_CONFIRM;
+    const EMAIL_CATEGORY = Emailer.UNSUB_CONFIRM;
 
     while (requests.length > 0) {
         let request = requests.pop();
@@ -55,6 +55,6 @@ export async function sendUnsubscribeEmail(requests) {
             continue;
         }
 
-        await Emailer.sendEmail(TYPE, email, subId, unsubscribeCode);
+        await Emailer.sendEmail(EMAIL_CATEGORY, email, subId, unsubscribeCode);
     }
 }
