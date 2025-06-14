@@ -21,6 +21,9 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+import * as fs from 'fs';
+const LOG_FILE_PATH = './logs/unlogged_emails.txt';
+
 import * as DBF from './DBFunc.js';
 
 // GLOBAL VARIABLES
@@ -51,7 +54,18 @@ async function send(email) {
             success = false;
         }
         else {
-            await DBF.insertEmailSent(email);
+            const logged = await DBF.insertEmailSent(email);
+            if (!logged) {
+                const logString = `${new Date()} \n ${JSON.stringify(email)} \n- - -\n`;
+                fs.appendFile(LOG_FILE_PATH, logString, function (err) {
+                    if (err) {
+                        console.log(`Failed to log email in database and log file. \nEmail: ${email}`);
+                    }
+                    else {
+                        console.log('Logged email in log file');
+                    }
+                });
+            }
             console.log(`Verification email sent to ${email.recipient}`);
             console.log(`Response: ${info.response}`);
             success = true;
