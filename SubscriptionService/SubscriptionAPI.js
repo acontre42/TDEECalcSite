@@ -16,7 +16,7 @@ dotenv.config({
 import * as DBF from './DBFunc.js';
 import * as Delete from './handlers/Delete.js';
 import * as Send from './handlers/Send.js';
-//import * as Scheduler from './handlers/Scheduler.js';
+import * as Scheduler from './handlers/Scheduler.js';
 
 const ERROR = null;
 const THIRTY_SEC = 30000, ONE_MIN = 60000, THIRTY_MIN = 1800000, ONE_HOUR = 3600000;
@@ -30,7 +30,7 @@ const handleUsersIntervalId = setInterval(handleUsers, THIRTY_SEC); // Handle us
 const handleSubRequestsId = setInterval(() => Send.sendConfirmationEmail(subRequests), THIRTY_SEC); // Handle subRequests every minute.
 const handlePendingReqId = setInterval(() => Send.sendPendingEmail(pendingRequests), ONE_MIN); // Handle pendingRequests every minute.
 const handleUnsubReqId = setInterval(() => Send.sendUnsubscribeEmail(unsubRequests), ONE_MIN); // Handle unsubRequests every minute.
-//const handleSchedulerId = setInterval(Scheduler.scheduleReminders, ONE_HOUR); // Check/schedule reminders every hour.
+const handleSchedulerId = setInterval(Scheduler.scheduleReminders, ONE_HOUR); // Check/schedule reminders every hour.
 const deleteConfirmationId = setInterval(Delete.deleteExpiredConfirmationCodes, THIRTY_MIN); // Check/delete expired confirmation_codes every hour.
 const deleteUpdateId = setInterval(Delete.deleteExpiredUpdateCodes, THIRTY_MIN); // Check/delete expired update_codes every hour.
 const deletePendingId = setInterval(Delete.deleteExpiredPendingUpdates, ONE_MIN); // Check/delete expired pending_updates every minute.
@@ -105,7 +105,6 @@ export async function updateMeasurements(subId, measurements) {
     
     const updated = await DBF.updateSubMeasurements(subId, dbMeasurements);
     await DBF.deleteUpdateCodeBySubId(subId);
-    console.log('updated record: ', updated); // *** DELETE
     return (updated ? true : false);
 }
 
