@@ -1,6 +1,8 @@
 "use strict";
 import * as DBF from '../DBFunc.js';
 import * as Emailer from '../Emailer.js';
+import fs from 'fs';
+const LOG_FILE_PATH = './logs/scheduling_errors.txt';
 
 // Responsible for inserting update_code, sending email, and updating scheduled_reminder.
 export async function scheduleReminders() {
@@ -14,18 +16,15 @@ export async function scheduleReminders() {
     const EMAIL_CATEGORY = Emailer.UPDATE_REMIND;
     const todaysReminders = await DBF.selectScheduledReminderByDate(month, day, year);
     if (!todaysReminders) {
-        console.log('No reminders');
         return;
     }
-    
+
     for (let reminder of todaysReminders) {
-        // *** TO DO: get subId, get subscriber, insert updateCode, send reminder email, schedule new reminder
         let subId = Number(reminder.sub_id);
 
         let subscriber = await DBF.selectSubscriberById(subId);
+        // If there is an error getting subscriber from database, it can be handled in the next go-around
         if (!subscriber) {
-            // If there is an error getting subscriber from database, it can be handled in the next go-around
-            console.log('ERROR SELECTING USER INSIDE SCHEDULER.JS');
             continue;
         }
 
@@ -37,22 +36,29 @@ export async function scheduleReminders() {
         }
         
         if (!updateCode) {
-            console.log('ERROR INSERTING NEW UPDATE_CODE INSIDE SCHEDULER.JS');
             continue;
         }
-        console.log(EMAIL_CATEGORY, subscriber.email, subId, updateCode.code); // *** DELETE
+        
+        // If error sending email, it can hopefully be sent in next go around
         let emailSent = await Emailer.sendEmail(EMAIL_CATEGORY, subscriber.email, subId, Number(updateCode.code));
         if (!emailSent) {
-            console.log('ERROR SENDING EMAIL FROM WITHIN SCHEDULER.JS');
             continue;
         }
 
         // If everything successful up to this point, we can update scheduled_reminder's date_scheduled to the date of the next reminder.
         let updatedSchedule = await DBF.updateScheduledReminder(subId);
         if (!updatedSchedule) {
-            // *** TO DO: log?
-            console.log('ERROR UPDATING SCHEDULED_REMINDER INSIDE SCHEDULER.JS');
+            let sched_err = {
+                sub_id: subId,
+                update_code: Number(updateCode.code),
+                date_reminder_sent: new Date()
+            };
+            fs.appendFile(LOG_FILE_PATH, `${JSON.stringify(sched_err)}\n`, function (err) {
+                if (err) {
+                    console.log('ERROR WHILE LOGGING SCHEDULING ERROR INSIDE SCHEDULER.JS');
+                }
+            });
         }
-
+        
     }
 }
