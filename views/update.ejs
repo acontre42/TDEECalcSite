@@ -14,12 +14,14 @@
             </h1>
         </header>
         <main>
-            <div id="infoDiv">
-                <p>To make updating your BMR and TDEE easier, we've prefilled the calculator with your last saved measurements.</p>
-                <p>On <%= measurements.date_last_updated %>, your estimated BMR was <%= measurements.est_bmr %> and your estimated TDEE was <%= measurements.est_tdee %>.</p>
-            </div>
 
             <div id="userDiv">
+                
+                <div id="infoDiv">
+                    <p>To make updating your BMR and TDEE easier, we've prefilled the calculator with your last saved measurements.</p>
+                    <p>On <%= measurements.date_last_updated %>, your estimated BMR was <%= measurements.est_bmr %> and your estimated TDEE was <%= measurements.est_tdee %>.</p>
+                </div>
+
                 <div id="userInputDiv">
                     <p>Enter your measurements:</p>
                     <div>
