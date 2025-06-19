@@ -67,6 +67,18 @@ export async function getSubscriberMeasurements(id) {
     }
 }
 
+// Convert pending_update measurements into input format and return them.
+export async function getPendingMeasurements(id) {
+    let measurements = await DBF.selectPendingUpdateBySubId(id);
+    if (!measurements) {
+        return ERROR;
+    }
+    else {
+        const pendingMeasurements = convertToInputFormat(measurements);
+        return (pendingMeasurements ? pendingMeasurements : ERROR);
+    }
+}
+
 // If a subscriber exists with the given email and is confirmed, create unsubscribe_code, schedule an email, return true.
 // If no subscriber exists or if there is already an associated unsubscribe_code, return false.
 export async function createUnsubscribeRequest(email) {
@@ -116,6 +128,16 @@ export async function confirmUpdate(subId) {
 
     const confirmed = await DBF.confirmPendingUpdate(subId);
     return confirmed;
+}
+
+// Delete pending_update and return true/false depending on result.
+export async function rejectUpdate(code) {
+    if (!code || typeof code != 'number') {
+        return false;
+    }
+
+    const deleted = await DBF.deletePendingUpdateByCode(code);
+    return deleted;
 }
 
 // Confirms subscriber's status and returns true/false depending on result

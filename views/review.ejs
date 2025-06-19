@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Personal BMR & TDEE Calculator</title>
+        <meta name="description" content="Approve pending measurements.">
+        <meta name="keywords" content="tdee, bmr, calculator, approve, reject">
+        <link rel="stylesheet" href="/css/styles.css">
+    </head>
+
+    <body>
+        <header>
+            <h1 id="header">
+                <a href="/">Personal BMR & TDEE Calculator</a>
+            </h1>
+        </header>
+
+        <main>
+            <div id="pendingDiv">
+                <h2>Did you want to save the following measurements?</h2>
+                <div id="measurementsDiv">
+                    <p>Sex: <b><%= pending.sex %></b></p>
+                    <p>Age: <b><%= pending.age %></b></p>
+                    <p>Height: <b><% if (pending.measurement_sys == 'imperial') {%>
+                    <%= pending.feet %> ' <%= pending.inches %>"
+                    <% } else { %>
+                    <%= pending.cm %> cm
+                    <% } %></b></p>
+                    <p>Weight: <b><% if (pending.measurement_sys == 'imperial') { %>
+                    <%= pending.lbs %> lbs
+                    <% } else { %>
+                    <%= pending.kg %> kg 
+                    <% } %></b></p>
+                    <p>Estimated BMR: <b><%= pending.est_bmr %></b></p>
+                    <p>Estimated TDEE: <b><%= pending.est_tdee %></b></p>
+                </div>
+
+                <span id="buttonsSpan">
+                    <button id="approve">Yes</button>
+                    <button id="reject">No</button>
+                </span>
+            </div>
+
+            <div id="resultDiv" class="hidden-elem">
+                <!-- Result message here -->
+            </div>
+            
+        </main>
+
+        <footer>
+            <p>Personal BMR and TDEE Calculator 2024-2025</p>
+        </footer>
+        <script src="/review.js" type="module"></script>
+    </body>
+</html>

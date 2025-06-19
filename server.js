@@ -103,10 +103,10 @@ app.put('/confirm/user/:id/:code', async function (req, res) {
     }
 });
 
-app.get('/confirm/update/:id/:code', async function (req, res) {
+app.get('/review/update/:id/:code', async function (req, res) {
     const id = parseInt(req.params.id);
     const code = parseInt(req.params.code);
-    
+
     let error = {
         code: 400,
         message: 'Bad Request'
@@ -123,23 +123,18 @@ app.get('/confirm/update/:id/:code', async function (req, res) {
             throw new Error();
         }
         
-        const path = `http://localhost:${port}` + req.url;
-        const response = await fetch(path, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const result = await response.json();
-        if (!response.ok) {
+        const pending = await Subscription.getPendingMeasurements(id);
+        if (!pending) {
             error = {
-                code: response.status,
-                message: result.message
+                code: 500,
+                message: 'Internal Server Error'
             };
             throw new Error();
         }
 
-        res.render('success.ejs', {result: result});
+        res.cookie('id', id);
+        res.cookie('pendingCode', code);
+        res.render('review.ejs', {pending: pending});
     }
     catch (err) {
         res.status(error.code).render('error.ejs', {error: error});
@@ -169,7 +164,32 @@ app.put('/confirm/update/:id/:code', async function (req, res) {
     catch (err) {
         res.status(errorCode).send({message: 'There was an error while attempting to update your measurements.'});
     }
-})
+});
+
+app.delete('/reject/update/:id/:code', async function (req, res) {
+    const id = parseInt(req.params.id);
+    const code = parseInt(req.params.code);
+
+    let errorCode;
+    try {
+        const validPair = await Subscription.pendingCodeBelongsToSubId(code, id);
+        if (!validPair) {
+            errorCode = 400;
+            throw new Error();
+        }
+
+        const deleted = await Subscription.rejectUpdate(code);
+        if (!deleted) {
+            errorCode = 500;
+            throw new Error();
+        }
+
+        res.status(200).send({message: 'Pending measurements successfully deleted.'});
+    }
+    catch (err) {
+        res.status(errorCode).send({message: 'There was an error while attempting to delete pending measurements.'});
+    }
+});
 
 app.get('/unsubscribe', (req, res) => {
     res.render('unsubscribe.ejs');
