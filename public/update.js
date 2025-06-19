@@ -6,7 +6,6 @@ import * as Misc from '/MiscFunc.js';
 const SAVE_DIV = document.getElementById("saveDiv");
 const RESULT_DIV = document.getElementById("resultDiv");
 const USER_DIV = document.getElementById("userDiv");
-const INFO_DIV = document.getElementById("infoDiv");
 const BMR_SPAN = document.getElementById("bmr");
 const TDEE_SPAN = document.getElementById("tdee");
 
@@ -61,9 +60,7 @@ async function save() {
         }
 
         RESULT_DIV.innerHTML = `<p>${message}</p>`;
-        Misc.hideElem(SAVE_DIV);
-        Misc.hideElem(USER_DIV);
-        Misc.hideElem(INFO_DIV);
+        USER_DIV.remove();
         Misc.unhideElem(RESULT_DIV);
     }
 }
