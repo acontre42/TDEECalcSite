@@ -1,6 +1,6 @@
 "use strict";
-import * as DBF from '../DBFunc.js';
-import * as Emailer from '../Emailer.js';
+import * as DBF from '../../model/DBFunc.js';
+import * as Emailer from '../../model/Emailer.js';
 import fs from 'fs';
 const LOG_FILE_PATH = './logs/scheduling_errors.txt';
 

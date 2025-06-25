@@ -31,7 +31,7 @@ export const EMAIL_CONFIRM = 'email confirmation',
             UPDATE_CONFIRM = 'update confirmation', 
             UNSUB_CONFIRM = 'unsubscribe', 
             UPDATE_REMIND = 'reminder';
-const BASE_URL = `http://localhost:3000/public/`;
+const BASE_URL = `http://localhost:3000/public/`; // ***
 
 // FUNCTIONS
 // (To be called by other email functions) Actually sends email. Returns true/false depending on outcome.
@@ -56,10 +56,10 @@ async function send(email) {
         else {
             const logged = await DBF.insertEmailSent(email);
             if (!logged) {
-                const logString = `${new Date()} \n ${JSON.stringify(email)} \n- - -\n`;
+                const logString = `${new Date()} \n ${JSON.stringify(email)} \n-\n`;
                 fs.appendFile(LOG_FILE_PATH, logString, function (err) {
                     if (err) {
-                        console.log(`Failed to log email in database and log file. \nEmail: ${email}`);
+                        console.log(`Failed to log email in both database and log file. \nEmail: ${email}`);
                     }
                     else {
                         console.log('Logged email in log file');

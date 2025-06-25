@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 //console.log(__dirname, __filename);
 
-import * as Subscription from './SubscriptionService/SubscriptionAPI.js';
+import * as Subscription from './controller/SubscriptionAPI.js';
 import * as Misc from './public/MiscFunc.js';
 
 app.set('view engine', 'ejs');

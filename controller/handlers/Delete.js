@@ -1,5 +1,5 @@
 "use strict";
-import * as DBF from '../DBFunc.js';
+import * as DBF from '../../model/DBFunc.js';
 import * as fs from 'fs';
 const LOG_FILE_PATH = './logs/delete.txt';
 

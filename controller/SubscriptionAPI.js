@@ -13,7 +13,7 @@ dotenv.config({
     path: path.join(__dirname, '/development.env')
 });
 
-import * as DBF from './DBFunc.js';
+import * as DBF from '../model/DBFunc.js';
 import * as Delete from './handlers/Delete.js';
 import * as Send from './handlers/Send.js';
 import * as Scheduler from './handlers/Scheduler.js';

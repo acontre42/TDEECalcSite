@@ -1,5 +1,5 @@
 "use strict";
-import * as Emailer from '../Emailer.js';
+import * as Emailer from '../../model/Emailer.js';
 
 export async function sendConfirmationEmail(requests) {
     console.log('HANDLING SUB REQUESTS'); // *** DELETE
