@@ -6,7 +6,7 @@ import express from 'express';
 const router = express.Router();
 
 import * as UnsubscribeController from '../controller/UnsubscribeController.js';
-import * as Subscription from '../controller/SubscriptionAPI.js';
+import * as Validate from '../controller/Validate.js';
 
 // route: /unsubscribe/...
 
@@ -34,13 +34,13 @@ router.get('/:id/:code', async (req, res) => {
         message: 'Bad Request'
     };
      try {
-        const validId = await Subscription.isValidId(id);
-        const validCode = await Subscription.isValidUnsubCode(code);
+        const validId = await Validate.isValidId(id);
+        const validCode = await Validate.isValidUnsubCode(code);
         if (!validId || !validCode) {
             throw new Error();
         }
         
-        const validPair = await Subscription.unsubscribeCodeBelongsToSubId(code, id);
+        const validPair = await Validate.unsubscribeCodeBelongsToSubId(code, id);
         if (!validPair) {
             throw new Error();
         }
@@ -75,7 +75,7 @@ router.delete('/:id/:code', async (req, res) => {
     
     let errorCode;
     try {
-        const validPair = await Subscription.unsubscribeCodeBelongsToSubId(code, id);
+        const validPair = await Validate.unsubscribeCodeBelongsToSubId(code, id);
         if (!validPair) {
             errorCode = 400;
             throw new Error();
