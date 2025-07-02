@@ -23,13 +23,11 @@ const THIRTY_SEC = 30000, ONE_MIN = 60000, THIRTY_MIN = 1800000, ONE_HOUR = 3600
 const CONFIRMATION_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUBSCRIBE_CODE = 'unsubscribe_code', PENDING_UPDATE = 'pending_update';
 const usersToHandle = [];
 const subRequests = []; // {email, subId, confirmationCode}
-const pendingRequests = []; // {email, subId, pendingCode}
-const unsubRequests = []; // {email, subId, unsubscribeCode} 
+const pendingRequests = []; // {email, subId, pendingCode} 
 // INTERVAL IDs
 const handleUsersIntervalId = setInterval(handleUsers, THIRTY_SEC); // Handle users every 30 seconds.
 const handleSubRequestsId = setInterval(() => Send.sendConfirmationEmail(subRequests), THIRTY_SEC); // Handle subRequests every minute.
 const handlePendingReqId = setInterval(() => Send.sendPendingEmail(pendingRequests), ONE_MIN); // Handle pendingRequests every minute.
-const handleUnsubReqId = setInterval(() => Send.sendUnsubscribeEmail(unsubRequests), ONE_MIN); // Handle unsubRequests every minute.
 const handleSchedulerId = setInterval(Scheduler.scheduleReminders, ONE_HOUR); // Check/schedule reminders every hour.
 const deleteConfirmationId = setInterval(Delete.deleteExpiredConfirmationCodes, THIRTY_MIN); // Check/delete expired confirmation_codes every hour.
 const deleteUpdateId = setInterval(Delete.deleteExpiredUpdateCodes, THIRTY_MIN); // Check/delete expired update_codes every hour.
@@ -79,30 +77,6 @@ export async function getPendingMeasurements(id) {
     }
 }
 
-// If a subscriber exists with the given email and is confirmed, create unsubscribe_code, schedule an email, return true.
-// If no subscriber exists or if there is already an associated unsubscribe_code, return false.
-export async function createUnsubscribeRequest(email) {
-    const sub = await DBF.selectSubscriberByEmail(email);
-    if (!sub || !sub.confirmed) {
-        return false;
-    }
-    const subId = Number(sub.id);
-    
-    const unsubscribeCode = await DBF.insertUnsubscribeCode(subId);
-    if (!unsubscribeCode) {
-        return false;
-    }
-    
-    const request = {
-        email: sub.email,
-        subId: subId,
-        unsubscribeCode: Number(unsubscribeCode.code)
-    };
-    unsubRequests.push(request);
-    
-    return true;
-}
-
 // Convert measurements into DB format and call updateSubMeasurements function. If successful, delete update_code.
 // Return true/false based on result of updateSubMeasurements
 export async function updateMeasurements(subId, measurements) {
@@ -148,16 +122,6 @@ export async function confirmUser(id) {
 
     const confirmed = await DBF.confirmSubscriber(id);
     return confirmed;
-}
-
-// Unsubscribes user and returns true/false depending on result.
-export async function unsubscribe(id) {
-    if (!id || typeof id != 'number') {
-        return false;
-    }
-
-    const deleted = await DBF.deleteSubscriberById(id);
-    return (deleted ? true : false);
 }
 
 // CONVERSION FUNCTIONS

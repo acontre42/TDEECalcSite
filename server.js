@@ -13,12 +13,18 @@ const __dirname = path.dirname(__filename);
 
 import * as Subscription from './controller/SubscriptionAPI.js';
 import * as Misc from './public/MiscFunc.js';
+import UnsubscribeRouter from './routes/UnsubscribeRouter.js'; // ***
 
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname + "/public"));
 app.use(express.json()); // Middleware to parse req.body
 app.use(cookieParser()); // Middleware for exposing cookie data as req.cookies property
 
+// ROUTERS
+app.use('/unsubscribe', UnsubscribeRouter);
+
+
+// ROUTES
 app.get('/', (req, res) => {
     res.render('index.ejs');
 });
@@ -188,91 +194,6 @@ app.delete('/reject/update/:id/:code', async function (req, res) {
     }
     catch (err) {
         res.status(errorCode).send({message: 'There was an error while attempting to delete pending measurements.'});
-    }
-});
-
-app.get('/unsubscribe', (req, res) => {
-    res.render('unsubscribe.ejs');
-});
-
-app.post('/unsubscribe', async (req, res) => {
-    const email = req.body.email;
-    const result = await Subscription.createUnsubscribeRequest(email);
-    if (result) {
-        res.status(200).send({message: `Request received to unsubscribe ${email}`});
-    }
-    else {
-        res.status(500).send({message: `There was a problem requesting to unsubscribe`});
-    }
-});
-
-app.get('/unsubscribe/:id/:code', async (req, res) => {
-    const id = parseInt(req.params.id);
-    const code = parseInt(req.params.code);
-    
-    let error = {
-        code: 400,
-        message: 'Bad Request'
-    };
-     try {
-        const validId = await Subscription.isValidId(id);
-        const validCode = await Subscription.isValidUnsubCode(code);
-        if (!validId || !validCode) {
-            throw new Error();
-        }
-        
-        const validPair = await Subscription.unsubscribeCodeBelongsToSubId(code, id);
-        if (!validPair) {
-            throw new Error();
-        }
-        
-        const path = `http://localhost:${port}` + req.url; // Full URL for server component
-        const response = await fetch(path, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        const result = await response.json();
-        
-        if (!response.ok) {
-            error = {
-                code: response.status,
-                message: result.message
-            };
-            throw new Error();
-        }
-
-        res.render('success.ejs', {result: result});
-    }
-    catch (err) {
-        res.status(error.code).render('error.ejs', {error: error});
-    }
-    
-});
-
-app.delete('/unsubscribe/:id/:code', async (req, res) => {
-    const id = parseInt(req.params.id);
-    const code = parseInt(req.params.code);
-    
-    let errorCode;
-    try {
-        const validPair = await Subscription.unsubscribeCodeBelongsToSubId(code, id);
-        if (!validPair) {
-            errorCode = 400;
-            throw new Error();
-        }
-        
-        const deleted = await Subscription.unsubscribe(id);
-        if (!deleted) {
-            errorCode = 500;
-            throw new Error();
-        }
-            
-        res.status(200).send({message: `You've been successfully unsubscribed.`});
-    }
-    catch (err) {
-        res.status(errorCode).send({message: `There was a problem during the unsubscription process.`});
     }
 });
 
