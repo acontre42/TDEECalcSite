@@ -7,6 +7,7 @@ const router = express.Router();
 
 import * as UserController from '../controller/UserController.js';
 import * as Validate from '../controller/Validate.js';
+import { isValidEmailFormat } from '../public/MiscFunc.js';
 
 // route: /user/...
 
@@ -78,5 +79,46 @@ router.put('/confirm/:id/:code', async (req, res) => {
         res.status(errorCode).send({message: `There was an error during the email confirmation process.`});
     }
 });
+
+router.post('/subscribe', async (req, res) => {
+    if (isValidRequest(req.body)) {
+        const user = req.body;
+        const msg = UserController.addUser(user);
+        res.status(200).send({message: msg});
+    }
+    else {
+        res.status(400).send({message: 'Invalid request.'});
+    }
+});
+
+// Valid request should have EMAIL, MEASUREMENT_SYS, SEX, AGE, FREQ, EST_BMR, EST_TDEE.
+// If measurement_sys = "imperial", request should have FEET, INCHES, LBS.
+// If measurement_sys = "metric", request should have CM, KG.
+function isValidRequest(body) {
+    if (!body.email || !body.measurement_sys || !body.sex || !body.age || !body.freq || !body.est_bmr || !body.est_tdee) {
+        return false;
+    }
+
+    if (!isValidEmailFormat(body.email)) {
+        return false;
+    }
+
+    switch (body.measurement_sys) {
+        case "imperial":
+            if (!body.feet || !body.lbs || (!body.inches && body.inches != 0)) {
+                return false;
+            }
+            break;
+        case "metric":
+            if (!body.cm || !body.kg) {
+                return false;
+            }
+            break;
+        default: // Measurement_sys other than imperial/metric
+            return false;
+    }
+
+    return true;
+}
 
 export default router; // ***

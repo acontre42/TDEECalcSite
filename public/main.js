@@ -69,7 +69,7 @@ function checkEmailInput(event) {
 // Post function
 async function postData(data) {
     try {
-        const response = await fetch("/", {
+        const response = await fetch("/user/subscribe", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

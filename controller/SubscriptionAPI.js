@@ -15,43 +15,18 @@ dotenv.config({
 
 import * as DBF from '../model/DBFunc.js';
 import * as Delete from './handlers/Delete.js';
-import * as Send from './handlers/Send.js';
 import * as Scheduler from './handlers/Scheduler.js';
 
 const ERROR = null;
-const THIRTY_SEC = 30000, ONE_MIN = 60000, THIRTY_MIN = 1800000, ONE_HOUR = 3600000;
+const ONE_MIN = 60000, THIRTY_MIN = 1800000, ONE_HOUR = 3600000;
 const CONFIRMATION_CODE = 'confirmation_code', UPDATE_CODE = 'update_code', UNSUBSCRIBE_CODE = 'unsubscribe_code', PENDING_UPDATE = 'pending_update';
-const usersToHandle = [];
-const subRequests = []; // {email, subId, confirmationCode}
-const pendingRequests = []; // {email, subId, pendingCode} 
+
 // INTERVAL IDs
-const handleUsersIntervalId = setInterval(handleUsers, THIRTY_SEC); // Handle users every 30 seconds.
-const handleSubRequestsId = setInterval(() => Send.sendConfirmationEmail(subRequests), THIRTY_SEC); // Handle subRequests every minute.
-const handlePendingReqId = setInterval(() => Send.sendPendingEmail(pendingRequests), ONE_MIN); // Handle pendingRequests every minute.
 const handleSchedulerId = setInterval(Scheduler.scheduleReminders, ONE_HOUR); // Check/schedule reminders every hour.
 const deleteConfirmationId = setInterval(Delete.deleteExpiredConfirmationCodes, THIRTY_MIN); // Check/delete expired confirmation_codes every hour.
 const deleteUpdateId = setInterval(Delete.deleteExpiredUpdateCodes, THIRTY_MIN); // Check/delete expired update_codes every hour.
 const deletePendingId = setInterval(Delete.deleteExpiredPendingUpdates, ONE_MIN); // Check/delete expired pending_updates every minute.
 const deleteUnsubscribeId = setInterval(Delete.deleteExpiredUnsubscribeCodes, ONE_MIN); // Check/delete expired unsubscribe_codes every minute.
-
-// Convert user to DB format, add them to usersToHandle array, and send message back if no errors 
-// Returns a string to be displayed to user
-export function addUser(user) {
-    const errorMessage = `There was an error while attempting to subscribe. Please try again later.`;
-    if (!user || !user.age || !user.sex || !user.email || !user.freq || !user.measurement_sys || !user.est_bmr || !user.est_tdee) {
-        return errorMessage;
-    }
-
-    const dbuser = convertToDBFormat(user);
-    if (!dbuser) {
-        return errorMessage;
-    }
-    else {
-        usersToHandle.push(dbuser);
-        let message = `A confirmation email will be sent to ${dbuser.email}.`;
-        return message;
-    }
-}
 
 // Convert subscriber_measurements from DB format into input format for the TDEE calculator.
 export async function getSubscriberMeasurements(id) {
@@ -159,61 +134,6 @@ function convertToInputFormat(sub) {
     }
 
     return user;
-}
-
-// INTERVAL FUNCTIONS
-// Check if user already in database.
-// If confirmed, create pending_update. Schedule new update confirmation email.
-// If pending, update subscriber_measurements and confirmation_code. Schedule new confirmation email.
-// If not in database, subscribe. Schedule new confirmation email.
-async function handleUsers() {
-    console.log(`HANDLING USERS AT ${new Date()}:`, usersToHandle); // *** DELETE
-    while (usersToHandle.length > 0) {
-        const user = usersToHandle.pop();
-        let request;
-
-        const existingSub = await DBF.selectSubscriberByEmail(user.email);
-        if (existingSub) {
-            let subId = Number(existingSub.id);
-            let success;
-            if (existingSub.confirmed) { // Confirmed Subscriber
-                success = await DBF.updateConfirmedSubscriber(subId, user);
-                if (success) {
-                    let pendingUpdate = await DBF.selectPendingUpdateBySubId(subId);
-                    request = {
-                        email: existingSub.email,
-                        subId: subId,
-                        pendingCode: Number(pendingUpdate.code)
-                    };
-                    pendingRequests.push(request);
-                }
-            }
-            else { // Pending Subscriber
-                success = await DBF.updatePendingSubscriber(subId, user);
-                if (success) {
-                    let confirmationCode = await DBF.selectConfirmationCodeBySubId(subId);
-                    request = {
-                        email: existingSub.email,
-                        subId: subId,
-                        confirmationCode: Number(confirmationCode.code)
-                    };
-                    subRequests.push(request);
-                }
-            }
-        }
-        else { // New Subscriber
-            const id = await DBF.subscribe(user);
-            if (id) {
-                let confirmationCode = await DBF.selectConfirmationCodeBySubId(id);
-                request = {
-                    email: user.email,
-                    subId: id,
-                    confirmationCode: Number(confirmationCode.code)
-                };
-                subRequests.push(request);
-            }
-        }
-    }
 }
 
 // VALIDATION FUNCTIONS

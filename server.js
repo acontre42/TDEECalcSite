@@ -12,7 +12,6 @@ const __dirname = path.dirname(__filename);
 //console.log(__dirname, __filename);
 
 import * as Subscription from './controller/SubscriptionAPI.js';
-import * as Misc from './public/MiscFunc.js';
 import UnsubscribeRouter from './routes/UnsubscribeRouter.js'; 
 import UserRouter from './routes/UserRouter.js';
 
@@ -29,17 +28,6 @@ app.use('/user', UserRouter);
 // ROUTES
 app.get('/', (req, res) => {
     res.render('index.ejs');
-});
-
-app.post("/", async (req, res) => {
-    if (isValidRequest(req.body)) {
-        const user = req.body;
-        const msg = Subscription.addUser(user);
-        res.status(200).send({message: msg});
-    }
-    else {
-        res.status(400).send({message: 'Invalid request.'});
-    }
 });
 
 app.get('/review/update/:id/:code', async function (req, res) {
@@ -196,34 +184,3 @@ app.get('*', (req, res) => {
 });
 
 app.listen(port, () => console.log(`Server is listening on port ${port}`));
-
-// FUNCTIONS
-// Valid request should have EMAIL, MEASUREMENT_SYS, SEX, AGE, FREQ, EST_BMR, EST_TDEE.
-// If measurement_sys = "imperial", request should have FEET, INCHES, LBS.
-// If measurement_sys = "metric", request should have CM, KG.
-function isValidRequest(body) {
-    if (!body.email || !body.measurement_sys || !body.sex || !body.age || !body.freq || !body.est_bmr || !body.est_tdee) {
-        return false;
-    }
-
-    if (!Misc.isValidEmailFormat(body.email)) {
-        return false;
-    }
-
-    switch (body.measurement_sys) {
-        case "imperial":
-            if (!body.feet || !body.lbs || (!body.inches && body.inches != 0)) {
-                return false;
-            }
-            break;
-        case "metric":
-            if (!body.cm || !body.kg) {
-                return false;
-            }
-            break;
-        default: // Measurement_sys other than imperial/metric
-            return false;
-    }
-
-    return true;
-}
