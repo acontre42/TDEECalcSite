@@ -13,7 +13,7 @@ REJECT.addEventListener("click", rejectUpdate);
 async function approveUpdate() {
     let id = cookies.id;
     let code = cookies.pendingCode;
-    let path = `/confirm/update/${id}/${code}`;
+    let path = `/update/confirm/${id}/${code}`;
 
     try {
         const response = await fetch(path, {
@@ -37,7 +37,7 @@ async function approveUpdate() {
 async function rejectUpdate() {
     let id = cookies.id;
     let code = cookies.pendingCode;
-    let path = `/reject/update/${id}/${code}`;
+    let path = `/update/reject/${id}/${code}`;
 
     try {
         const response = await fetch(path, {
