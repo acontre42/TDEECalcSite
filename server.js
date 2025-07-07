@@ -11,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 //console.log(__dirname, __filename);
 
-import * as Subscription from './controller/SubscriptionAPI.js';
+import * as TaskIntervals from './controller/TaskIntervals.js';
 import UnsubscribeRouter from './routes/UnsubscribeRouter.js';
 import UpdateRouter from './routes/UpdateRouter.js';
 import UserRouter from './routes/UserRouter.js';
