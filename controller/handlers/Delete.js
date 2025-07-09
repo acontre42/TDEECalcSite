@@ -27,10 +27,7 @@ async function deleteExpired(table, selectFunc, deleteFunc) {
         const text = `${new Date()}: ${numDeleted} RECORD(S) DELETED FROM ${table} TABLE \n`;
         fs.appendFile(LOG_FILE_PATH, text, function (err) {
             if (err) {
-                console.log(err);
-            }
-            else {
-                console.log('Log successful');
+                console.log('LOGGING ERROR: ', err);
             }
         });
     }

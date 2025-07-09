@@ -8,6 +8,11 @@ const unsubRequests = []; // {email, subId, unsubscribeCode}
 const ONE_MIN = 60000;
 const handleUnsubReqId = setInterval(() => sendUnsubscribeEmail(unsubRequests), ONE_MIN); // Handle unsubRequests every minute.
 
+// CONSOLE.LOG INFO
+console.log(`UnsubscibeController Task / \t Interval
+    handleUnsubReq \t \t ${ONE_MIN / 1000} sec`);
+
+// FUNCTIONS
 // If a subscriber exists with the given email and is confirmed, create unsubscribe_code, schedule an email, return true.
 // If no subscriber exists or if there is already an associated unsubscribe_code, return false.
 export async function createUnsubscribeRequest(email) {

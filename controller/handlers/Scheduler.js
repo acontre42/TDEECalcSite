@@ -11,7 +11,7 @@ export async function scheduleReminders() {
     const day = today.getDate();
     const year = today.getFullYear();
 
-    console.log(`Handling scheduled_reminders at ${today}`); // *** DELETE
+    console.log(`Handling scheduled_reminders at ${today.toLocaleString()}`);
 
     const EMAIL_CATEGORY = Emailer.UPDATE_REMIND;
     const todaysReminders = await DBF.selectScheduledReminderByDate(month, day, year);

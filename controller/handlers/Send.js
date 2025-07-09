@@ -2,7 +2,6 @@
 import * as Emailer from '../../model/Emailer.js';
 
 export async function sendConfirmationEmail(requests) {
-    console.log('HANDLING SUB REQUESTS'); // *** DELETE
     if (!requests || !Array.isArray(requests)) {
         return;
     }
@@ -21,7 +20,6 @@ export async function sendConfirmationEmail(requests) {
 }
 
 export async function sendPendingEmail(requests) {
-    console.log('HANDLING PENDING REQUESTS'); // *** DELETE
     if (!requests || !Array.isArray(requests)) {
         return;
     }
@@ -41,7 +39,6 @@ export async function sendPendingEmail(requests) {
 
 // Handles unsubscribeRequests by sending unsubscribe confirmation emails
 export async function sendUnsubscribeEmail(requests) {
-    console.log('HANDLING UNSUB REQUESTS'); // *** DELETE
     if (!requests || !Array.isArray(requests)) {
         return;
     }

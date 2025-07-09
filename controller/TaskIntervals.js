@@ -11,3 +11,11 @@ const deleteConfirmationId = setInterval(Delete.deleteExpiredConfirmationCodes, 
 const deleteUpdateId = setInterval(Delete.deleteExpiredUpdateCodes, THIRTY_MIN); // Check/delete expired update_codes every hour.
 const deletePendingId = setInterval(Delete.deleteExpiredPendingUpdates, ONE_MIN); // Check/delete expired pending_updates every minute.
 const deleteUnsubscribeId = setInterval(Delete.deleteExpiredUnsubscribeCodes, ONE_MIN); // Check/delete expired unsubscribe_codes every minute.
+
+// CONSOLE.LOG INFO
+console.log(`Background Task \t / \t Interval
+    handleScheduler \t \t ${ONE_HOUR / ONE_MIN} min
+    deleteConfirmation \t \t ${THIRTY_MIN / ONE_MIN} min
+    deleteUpdate \t \t ${THIRTY_MIN / ONE_MIN} min
+    deletePending \t \t ${ONE_MIN / ONE_MIN} min
+    deleteUnsubscribe \t \t ${ONE_MIN / ONE_MIN} min`);

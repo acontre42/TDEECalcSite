@@ -15,6 +15,13 @@ const handleUsersIntervalId = setInterval(handleUsers, THIRTY_SEC); // Handle us
 const handleSubRequestsId = setInterval(() => Send.sendConfirmationEmail(subRequests), THIRTY_SEC); // Handle subRequests every minute.
 const handlePendingReqId = setInterval(() => Send.sendPendingEmail(pendingRequests), ONE_MIN); // Handle pendingRequests every minute.
 
+// CONSOLE.LOG INFO
+console.log(`UserController Task \t / \t Interval
+    handleUsers \t \t ${THIRTY_SEC / 1000} sec
+    handleSubRequests \t \t ${THIRTY_SEC / 1000} sec
+    handlePendingReq \t \t ${ONE_MIN / 1000} sec`);
+
+// FUNCTIONS
 // Convert user to DB format, add them to usersToHandle array, and returns a string to be displayed to user
 export function addUser(user) {
     const errorMessage = `There was an error while attempting to subscribe. Please try again later.`;
@@ -48,7 +55,6 @@ export async function confirmUser(id) {
 // If pending, update subscriber_measurements and confirmation_code. Schedule new confirmation email.
 // If not in database, subscribe. Schedule new confirmation email.
 async function handleUsers() {
-    console.log(`HANDLING USERS AT ${new Date()}:`, usersToHandle); // *** DELETE
     while (usersToHandle.length > 0) {
         const user = usersToHandle.pop();
         let request;
