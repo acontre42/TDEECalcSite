@@ -1,6 +1,7 @@
 "use strict";
 import * as Emailer from '../../model/Emailer.js';
 
+// Handles subRequests by sending email confirmation emails
 export async function sendConfirmationEmail(requests) {
     if (!requests || !Array.isArray(requests)) {
         return;
@@ -19,6 +20,7 @@ export async function sendConfirmationEmail(requests) {
     }
 }
 
+// Handles pendingRequests by sending update confirmation emails
 export async function sendPendingEmail(requests) {
     if (!requests || !Array.isArray(requests)) {
         return;
